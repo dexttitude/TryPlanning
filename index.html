@@ -6029,32 +6029,39 @@ async function tpWrite(code,data){
 }
 
 // ── Get current local data ──
+// All localStorage keys to sync (full personalisation)
+const TP_SYNC_KEYS=[
+  'dv_name','dv_avatar','dv_theme','dv_aes','dv_s','dv_w',
+  'dv_n','dv_cn','dv_ft','dv_h','dv_xp','dv_tf','dv_custom',
+  'dv_custom_cats','dv_appt','dv_tile_meta','tp_friends',
+  'dv_game_hi','dv_12h','dv_flip_size','dv_yt_enabled'
+];
+
 function tpGetLocalData(){
   try{
     const{tot,don}=countCells();
-    return{
-      name:loadName()||'',avatar:localStorage.getItem('dv_avatar')||'🐱',
-      weekState:localStorage.getItem('dv_s')||'{}',
-      weekKey:localStorage.getItem('dv_w')||'',
-      notes:localStorage.getItem('dv_n')||'',
-      xp:parseInt(localStorage.getItem('dv_xp')||'0'),
-      streak:getStreak(),pct:tot?Math.round(don/tot*100):0,
-      friends:JSON.parse(localStorage.getItem('tp_friends')||'[]'),
-      updatedAt:Date.now()
-    };
-  }catch(e){return{name:'',avatar:'🐱',weekState:'{}',weekKey:'',notes:'',xp:0,streak:0,pct:0,friends:[],updatedAt:Date.now()};}
+    const data={updatedAt:Date.now(),streak:getStreak(),pct:tot?Math.round(don/tot*100):0};
+    TP_SYNC_KEYS.forEach(k=>{const v=localStorage.getItem(k);if(v!=null)data[k]=v;});
+    return data;
+  }catch(e){return{updatedAt:Date.now(),streak:0,pct:0};}
 }
 
-// ── Apply remote data locally ──
+// ── Apply remote data — full restore ──
 function tpApplyRemote(d){
   if(!d)return;
-  if(d.weekState)localStorage.setItem('dv_s',d.weekState);
-  if(d.weekKey)localStorage.setItem('dv_w',d.weekKey);
-  if(d.notes!=null)localStorage.setItem('dv_n',d.notes);
-  if(d.friends)localStorage.setItem('tp_friends',JSON.stringify(d.friends));
+  // Apply all synced keys
+  TP_SYNC_KEYS.forEach(k=>{if(d[k]!=null)localStorage.setItem(k,d[k]);});
+  // Re-apply theme + aesthetic
+  const theme=d['dv_theme'];const aes=d['dv_aes'];
+  if(theme&&window.applyTheme)applyTheme(theme);
+  if(aes&&window.applyAesthetic)applyAesthetic(aes);
+  // Rebuild UI
   buildTable();buildTodayStrip();updateStats();
   const noteEl=document.getElementById('notesArea');
-  if(noteEl&&document.activeElement!==noteEl)noteEl.value=d.notes||'';
+  if(noteEl&&document.activeElement!==noteEl)noteEl.value=d['dv_n']||'';
+  // Update name display
+  const nameEl=document.getElementById('ownerName');
+  if(nameEl&&d['dv_name'])nameEl.textContent=d['dv_name'];
 }
 
 // ── Push local → kvdb ──
@@ -6063,10 +6070,10 @@ async function tpPush(){
   try{await tpWrite(_tpCode,tpGetLocalData());}catch(e){}
 }
 
-// ── Poll remote every 30s ──
+// ── Smart poll: 5s when tab visible, 30s when hidden ──
 function tpStartPoll(){
   if(_tpPollTimer)clearInterval(_tpPollTimer);
-  _tpPollTimer=setInterval(async()=>{
+  async function poll(){
     if(!_tpCode)return;
     try{
       const d=await tpRead(_tpCode);
@@ -6075,9 +6082,19 @@ function tpStartPoll(){
       if(d.updatedAt&&d.updatedAt>localTs){
         localStorage.setItem('tp_last_remote',String(d.updatedAt));
         tpApplyRemote(d);
+        // Show subtle sync indicator
+        const btn=document.getElementById('tbBtnSync');
+        if(btn){btn.textContent='☁️ Synced';setTimeout(()=>{btn.textContent='☁️ Sync';},2000);}
       }
     }catch(e){}
-  },30000);
+  }
+  const interval=document.hidden?30000:8000;
+  _tpPollTimer=setInterval(poll,interval);
+  // Adjust interval when visibility changes
+  document.addEventListener('visibilitychange',()=>{
+    clearInterval(_tpPollTimer);
+    _tpPollTimer=setInterval(poll,document.hidden?30000:8000);
+  },{once:false});
 }
 
 // ── Generate new sync code ──
@@ -6181,29 +6198,81 @@ async function loadFriends(){
   const list=document.getElementById('friendsList');
   const friends=JSON.parse(localStorage.getItem('tp_friends')||'[]');
   if(!friends.length){
-    list.innerHTML='<div style="text-align:center;padding:30px;color:var(--text-muted);font-size:13px;">No friends yet.<br>Share your sync code and add theirs!</div>';
+    list.innerHTML=`<div style="text-align:center;padding:40px 20px;">
+      <div style="font-size:48px;margin-bottom:12px;">👥</div>
+      <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px;">No friends yet!</div>
+      <div style="font-size:13px;color:var(--text-muted);line-height:1.6;">Share your sync code with friends.<br>Add their code above to see their progress.</div>
+    </div>`;
     return;
   }
-  list.innerHTML='<div style="text-align:center;color:var(--text-muted);font-size:12px;padding:10px;">Loading…</div>';
+  list.innerHTML='<div style="text-align:center;color:var(--text-muted);font-size:12px;padding:16px;">Loading friends…</div>';
+  // Fetch all friends in parallel
+  const results=await Promise.all(friends.map(async code=>{
+    try{const d=await tpRead(code);return{code,data:d||null};}
+    catch(e){return{code,data:null};}
+  }));
   list.innerHTML='';
-  for(const code of friends){
-    let u={name:'Unknown',avatar:'🐱',pct:0,streak:0,xp:0};
-    try{const d=await tpRead(code);if(d)u=d;}catch(e){}
+  // Sort by pct descending (leaderboard style)
+  results.sort((a,b)=>(b.data?.pct||0)-(a.data?.pct||0));
+  const myPct=parseInt(localStorage.getItem('tp_last_pct')||'0');
+  results.forEach(({code,data:u},idx)=>{
+    if(!u){u={dv_name:'Unknown',dv_avatar:'🐱',pct:0,streak:0,xp:0};}
+    const name=u['dv_name']||u.name||'Friend';
+    const avatar=u['dv_avatar']||u.avatar||'🐱';
     const pct=u.pct||0;
-    const bar=pct>=80?'#10b981':pct>=50?'#f59e0b':'#6366f1';
+    const streak=u.streak||0;
+    const xp=u.xp||u['dv_xp']||0;
+    const lv=xpToLevel(parseInt(xp));
+    const rank=idx+1;
+    const rankEmoji=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':`#${rank}`;
+    const barColor=pct>=80?'#10b981':pct>=50?'#f59e0b':'#6366f1';
+    const streakFire=streak>=7?'🔥🔥':streak>=3?'🔥':'💤';
+    const pctLabel=pct>=90?'On fire! 🚀':pct>=70?'Crushing it 💪':pct>=50?'Halfway there 👍':pct>0?'Getting started 🌱':'Not started yet';
     const card=document.createElement('div');
-    card.style.cssText='padding:14px 16px;background:var(--bg);border-radius:14px;border:1px solid var(--card-border);display:flex;align-items:center;gap:12px;';
-    card.innerHTML=`<div style="font-size:28px;flex-shrink:0;">${u.avatar||'🐱'}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px;">${u.name||'Friend'} <span style="font-size:10px;color:var(--text-muted);font-family:monospace;">${code}</span></div>
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">🔥 ${u.streak||0} streak · Lv ${xpToLevel(u.xp||0)} · ${pct}% this week</div>
-        <div style="height:6px;background:var(--progress-track);border-radius:6px;overflow:hidden;">
-          <div style="height:100%;width:${pct}%;background:${bar};border-radius:6px;"></div>
+    card.style.cssText='padding:16px;background:var(--bg);border-radius:16px;border:1px solid var(--card-border);margin-bottom:2px;';
+    card.innerHTML=`
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:800;color:var(--text-muted);width:24px;text-align:center;">${rankEmoji}</div>
+        <div style="font-size:32px;">${avatar}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:15px;font-weight:700;color:var(--text);">${name}</div>
+          <div style="font-size:11px;color:var(--text-muted);font-family:monospace;">${code}</div>
         </div>
+        <button onclick="removeFriend('${code}')" style="border:none;background:none;color:var(--text-muted);font-size:18px;cursor:pointer;padding:4px;" title="Remove">×</button>
       </div>
-      <button onclick="removeFriend('${code}')" style="border:none;background:none;color:var(--text-muted);font-size:20px;cursor:pointer;">×</button>`;
+      <!-- Progress bar -->
+      <div style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+          <span style="font-size:12px;font-weight:600;color:var(--text-muted);">This week</span>
+          <span style="font-size:13px;font-weight:800;color:${barColor};">${pct}%</span>
+        </div>
+        <div style="height:8px;background:var(--progress-track);border-radius:8px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,${barColor},${barColor}cc);border-radius:8px;transition:width .6s ease;"></div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${pctLabel}</div>
+      </div>
+      <!-- Stats row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <div style="background:var(--card-bg);border-radius:10px;padding:8px;text-align:center;border:1px solid var(--card-border);">
+          <div style="font-size:16px;margin-bottom:2px;">${streakFire}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);">${streak}</div>
+          <div style="font-size:10px;color:var(--text-muted);">day streak</div>
+        </div>
+        <div style="background:var(--card-bg);border-radius:10px;padding:8px;text-align:center;border:1px solid var(--card-border);">
+          <div style="font-size:16px;margin-bottom:2px;">⭐</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);">Lv ${lv}</div>
+          <div style="font-size:10px;color:var(--text-muted);">${parseInt(xp).toLocaleString()} XP</div>
+        </div>
+        <div style="background:var(--card-bg);border-radius:10px;padding:8px;text-align:center;border:1px solid var(--card-border);">
+          <div style="font-size:16px;margin-bottom:2px;">${pct>myPct?'📈':'📊'}</div>
+          <div style="font-size:13px;font-weight:700;color:${pct>myPct?'#10b981':pct<myPct?'#f59e0b':'var(--text)'};">${pct>myPct?'Ahead':'Behind'}</div>
+          <div style="font-size:10px;color:var(--text-muted);">vs you</div>
+        </div>
+      </div>`;
     list.appendChild(card);
-  }
+  });
+  // Save own pct for comparison
+  try{const{tot,don}=countCells();localStorage.setItem('tp_last_pct',String(tot?Math.round(don/tot*100):0));}catch(e){}
 }
 
 async function removeFriend(code){
@@ -6214,12 +6283,25 @@ async function removeFriend(code){
   loadFriends();
 }
 
-// ── Hook into app saves ──
+// ── Hook into app saves — push on every change ──
 (function(){
-  const _orig=window.saveSched;
-  if(_orig)window.saveSched=function(s){_orig(s);setTimeout(tpPush,500);};
+  // Schedule state (cell ticks)
+  const _origSave=window.saveSched;
+  if(_origSave)window.saveSched=function(s){_origSave(s);setTimeout(tpPush,300);};
+  // Notes
   const noteEl=document.getElementById('notesArea');
   if(noteEl)noteEl.addEventListener('blur',tpPush);
+  // Theme / aesthetic changes
+  const _origTheme=window.applyTheme;
+  if(_origTheme)window.applyTheme=function(t){_origTheme(t);setTimeout(tpPush,500);};
+  const _origAes=window.applyAesthetic;
+  if(_origAes)window.applyAesthetic=function(a){_origAes(a);setTimeout(tpPush,500);};
+  // XP changes
+  const _origSaveXP=window.saveXP;
+  if(_origSaveXP)window.saveXP=function(v){_origSaveXP(v);setTimeout(tpPush,300);};
+  // Customise saves (name, avatar etc)
+  const _origSaveCust=window.saveCustomise;
+  if(_origSaveCust)window.saveCustomise=function(){_origSaveCust();setTimeout(tpPush,500);};
 })();
 
 // ── Auto-reconnect on load ──
