@@ -5985,6 +5985,8 @@ async function removeFriend(fid){
 //  TRYPLANNING SYNC — powered by JSONBlob (zero-setup)
 // ═══════════════════════════════════════════════════════
 const TP_BLOB_BASE = 'https://jsonblob.com/api/jsonBlob';
+const TP_PROXY = 'https://corsproxy.io/?';
+function tpUrl(path){return TP_PROXY+encodeURIComponent(TP_BLOB_BASE+(path?'/'+path:''));}
 const TP_INDEX_ID  = '019d9257-9b89-7e5c-b403-47abb424bb8c'; // master index
 const TP_CODE_KEY  = 'tp_sync_code';
 const TP_BLOB_KEY  = 'tp_blob_id';
@@ -6010,10 +6012,10 @@ async function tpFetch(url,opts={}){
 }
 
 // ── Read / Write user blob ──
-async function tpReadBlob(blobId){return tpFetch(TP_BLOB_BASE+'/'+blobId);}
-async function tpWriteBlob(blobId,data){return tpFetch(TP_BLOB_BASE+'/'+blobId,{method:'PUT',body:JSON.stringify(data)});}
+async function tpReadBlob(blobId){return tpFetch(tpUrl(blobId));}
+async function tpWriteBlob(blobId,data){return tpFetch(tpUrl(blobId),{method:'PUT',body:JSON.stringify(data)});}
 async function tpCreateBlob(data){
-  const res=await fetch(TP_BLOB_BASE,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)});
+  const res=await fetch(tpUrl(''),{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)});
   if(!res.ok)throw new Error('HTTP '+res.status);
   const loc=res.headers.get('location')||'';
   const id=loc.split('/').pop();
@@ -6022,8 +6024,8 @@ async function tpCreateBlob(data){
 }
 
 // ── Index: maps short code → blob ID ──
-async function tpReadIndex(){return tpFetch(TP_BLOB_BASE+'/'+TP_INDEX_ID);}
-async function tpWriteIndex(idx){return tpFetch(TP_BLOB_BASE+'/'+TP_INDEX_ID,{method:'PUT',body:JSON.stringify(idx)});}
+async function tpReadIndex(){return tpFetch(tpUrl(TP_INDEX_ID));}
+async function tpWriteIndex(idx){return tpFetch(tpUrl(TP_INDEX_ID),{method:'PUT',body:JSON.stringify(idx)});}
 
 // ── Get current app data to sync ──
 function tpGetLocalData(){
