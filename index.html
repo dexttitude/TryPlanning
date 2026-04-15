@@ -5984,73 +5984,49 @@ async function removeFriend(fid){
 // ═══════════════════════════════════════════════════════
 //  TRYPLANNING SYNC — powered by JSONBlob (zero-setup)
 // ═══════════════════════════════════════════════════════
-const TP_BLOB_BASE = 'https://jsonblob.com/api/jsonBlob';
-const TP_PROXY = 'https://corsproxy.io/?';
-function tpUrl(path){return TP_PROXY+encodeURIComponent(TP_BLOB_BASE+(path?'/'+path:''));}
-const TP_INDEX_ID  = '019d9257-9b89-7e5c-b403-47abb424bb8c'; // master index
+// ═══════════════════════════════════════════════════════
+//  TRYPLANNING SYNC — powered by kvdb.io
+// ═══════════════════════════════════════════════════════
+const TP_KV_BUCKET = 'FEYtjzp5czsTEfghUkcpij';
+const TP_KV_BASE   = 'https://kvdb.io/' + TP_KV_BUCKET + '/';
 const TP_CODE_KEY  = 'tp_sync_code';
-const TP_BLOB_KEY  = 'tp_blob_id';
-let _tpCode = null, _tpBlobId = null, _tpPollTimer = null;
+let _tpCode = null, _tpPollTimer = null;
 
-// ── Helpers ──
-function tpMsg(msg, color='var(--text-muted)'){
-  const el=document.getElementById('syncMsg');
-  if(el){el.style.color=color;el.textContent=msg;}
-}
+// ── Generate a random 6-char sync code ──
 function tpRandCode(){
   const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code='';for(let i=0;i<6;i++)code+=chars[Math.floor(Math.random()*chars.length)];
   return code;
 }
-async function tpFetch(url,opts={}){
-  const method=(opts.method||'GET').toUpperCase();
-  const isWrite=method==='POST'||method==='PUT';
-  const headers={...(isWrite?{'Content-Type':'application/json'}:{}),'Accept':'application/json',...(opts.headers||{})};
-  const res=await fetch(url,{...opts,headers});
-  if(!res.ok)throw new Error('HTTP '+res.status);
-  return res.json();
+
+// ── Read / Write via kvdb ──
+async function tpRead(code){
+  const res=await fetch(TP_KV_BASE+encodeURIComponent(code),{headers:{Accept:'application/json'}});
+  if(res.status===404)return null;
+  if(!res.ok)throw new Error('Read failed: '+res.status);
+  const text=await res.text();
+  try{return JSON.parse(text);}catch(e){return null;}
+}
+async function tpWrite(code,data){
+  const res=await fetch(TP_KV_BASE+encodeURIComponent(code),{
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(data)
+  });
+  if(!res.ok)throw new Error('Write failed: '+res.status);
 }
 
-// ── Read / Write user blob ──
-async function tpReadBlob(blobId){return tpFetch(tpUrl(blobId));}
-async function tpWriteBlob(blobId,data){return tpFetch(tpUrl(blobId),{method:'PUT',body:JSON.stringify(data)});}
-async function tpCreateBlob(data){
-  const res=await fetch(tpUrl(''),{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)});
-  const bodyText=await res.text();
-  if(!res.ok)throw new Error('HTTP '+res.status+' body:'+bodyText.slice(0,200));
-  // Try headers first
-  let id=res.headers.get('x-jsonblob-id')||
-         (res.headers.get('location')||'').split('/').pop()||'';
-  // Try parsing body as JSON (some proxies wrap response)
-  if(!id){
-    try{
-      const parsed=JSON.parse(bodyText);
-      // Direct blob ID in body, or wrapped in proxy format
-      id=parsed['x-jsonblob-id']||parsed.id||parsed.blobId||
-         (parsed.headers&&(parsed.headers['x-jsonblob-id']||parsed.headers.location||'').split('/').pop())||'';
-    }catch(e){}
-  }
-  if(!id)throw new Error('Debug - body:'+bodyText.slice(0,300)+' headers:'+JSON.stringify([...res.headers.entries()]));
-  return id;
-}
-
-// ── Index: maps short code → blob ID ──
-async function tpReadIndex(){return tpFetch(tpUrl(TP_INDEX_ID));}
-async function tpWriteIndex(idx){return tpFetch(tpUrl(TP_INDEX_ID),{method:'PUT',body:JSON.stringify(idx)});}
-
-// ── Get current app data to sync ──
+// ── Get current local data ──
 function tpGetLocalData(){
   try{
     const{tot,don}=countCells();
     return{
-      name:loadName()||'',
-      avatar:localStorage.getItem('dv_avatar')||'🐱',
+      name:loadName()||'',avatar:localStorage.getItem('dv_avatar')||'🐱',
       weekState:localStorage.getItem('dv_s')||'{}',
       weekKey:localStorage.getItem('dv_w')||'',
       notes:localStorage.getItem('dv_n')||'',
       xp:parseInt(localStorage.getItem('dv_xp')||'0'),
-      streak:getStreak(),
-      pct:tot?Math.round(don/tot*100):0,
+      streak:getStreak(),pct:tot?Math.round(don/tot*100):0,
       friends:JSON.parse(localStorage.getItem('tp_friends')||'[]'),
       updatedAt:Date.now()
     };
@@ -6062,75 +6038,61 @@ function tpApplyRemote(d){
   if(!d)return;
   if(d.weekState)localStorage.setItem('dv_s',d.weekState);
   if(d.weekKey)localStorage.setItem('dv_w',d.weekKey);
-  if(d.notes)localStorage.setItem('dv_n',d.notes);
-  if(d.customSched)localStorage.setItem('dv_custom',d.customSched);
+  if(d.notes!=null)localStorage.setItem('dv_n',d.notes);
   if(d.friends)localStorage.setItem('tp_friends',JSON.stringify(d.friends));
   buildTable();buildTodayStrip();updateStats();
   const noteEl=document.getElementById('notesArea');
   if(noteEl&&document.activeElement!==noteEl)noteEl.value=d.notes||'';
 }
 
-// ── Push local → blob ──
+// ── Push local → kvdb ──
 async function tpPush(){
-  if(!_tpBlobId)return;
-  try{await tpWriteBlob(_tpBlobId,tpGetLocalData());}catch(e){}
+  if(!_tpCode)return;
+  try{await tpWrite(_tpCode,tpGetLocalData());}catch(e){}
 }
 
-// ── Poll remote → local (every 30s) ──
+// ── Poll remote every 30s ──
 function tpStartPoll(){
   if(_tpPollTimer)clearInterval(_tpPollTimer);
   _tpPollTimer=setInterval(async()=>{
-    if(!_tpBlobId)return;
+    if(!_tpCode)return;
     try{
-      const d=await tpReadBlob(_tpBlobId);
+      const d=await tpRead(_tpCode);
+      if(!d)return;
       const localTs=parseInt(localStorage.getItem('tp_last_remote')||'0');
       if(d.updatedAt&&d.updatedAt>localTs){
-        localStorage.setItem('tp_last_remote',d.updatedAt);
+        localStorage.setItem('tp_last_remote',String(d.updatedAt));
         tpApplyRemote(d);
       }
     }catch(e){}
   },30000);
 }
 
-// ── Generate a new sync code ──
+// ── Generate new sync code ──
 async function generateSyncCode(){
   tpMsg('Creating your sync code…');
   try{
-    // Create user blob
-    const data=tpGetLocalData();
-    const blobId=await tpCreateBlob(data);
-    // Generate unique code
-    const idx=await tpReadIndex();
-    let code=tpRandCode();
-    let tries=0;
-    while(idx.codes[code]&&tries<20){code=tpRandCode();tries++;}
-    // Register in index
-    idx.codes[code]=blobId;
-    await tpWriteIndex(idx);
-    // Save locally
-    _tpCode=code;_tpBlobId=blobId;
+    const code=tpRandCode();
+    await tpWrite(code,tpGetLocalData());
+    _tpCode=code;
     localStorage.setItem(TP_CODE_KEY,code);
-    localStorage.setItem(TP_BLOB_KEY,blobId);
     showSyncConnected(code);
     tpStartPoll();
     showNotif('☁️ Sync enabled! Your code: '+code);
   }catch(e){tpMsg('Error: '+e.message,'#ef4444');}
 }
 
-// ── Connect using an existing code ──
+// ── Connect with existing code ──
 async function connectSyncCode(){
   const code=(document.getElementById('syncCodeInput').value||'').trim().toUpperCase();
   if(code.length!==6){tpMsg('Enter your 6-letter code','#ef4444');return;}
   tpMsg('Connecting…');
   try{
-    const idx=await tpReadIndex();
-    const blobId=idx.codes[code];
-    if(!blobId){tpMsg('Code not found — check and try again','#ef4444');return;}
-    const data=await tpReadBlob(blobId);
-    _tpCode=code;_tpBlobId=blobId;
+    const d=await tpRead(code);
+    if(!d){tpMsg('Code not found — check and try again','#ef4444');return;}
+    _tpCode=code;
     localStorage.setItem(TP_CODE_KEY,code);
-    localStorage.setItem(TP_BLOB_KEY,blobId);
-    tpApplyRemote(data);
+    tpApplyRemote(d);
     showSyncConnected(code);
     tpStartPoll();
     showNotif('☁️ Connected! Schedule synced.');
@@ -6140,17 +6102,15 @@ async function connectSyncCode(){
 function disconnectSync(){
   if(!confirm('Stop syncing? Your local data stays.'))return;
   if(_tpPollTimer)clearInterval(_tpPollTimer);
-  _tpCode=null;_tpBlobId=null;
+  _tpCode=null;
   localStorage.removeItem(TP_CODE_KEY);
-  localStorage.removeItem(TP_BLOB_KEY);
   showSyncDisconnected();
 }
-
 function copySyncCode(){
   navigator.clipboard.writeText(_tpCode||'').then(()=>showNotif('Code copied! 📋'));
 }
 
-// ── UI state ──
+// ── Sync panel UI ──
 function openSyncPanel(){
   document.getElementById('syncPanel').style.display='flex';
   if(_tpCode){showSyncConnected(_tpCode);}else{showSyncDisconnected();}
@@ -6166,14 +6126,18 @@ function showSyncDisconnected(){
   document.getElementById('syncDisconnected').style.display='block';
   tpMsg('');
 }
+function tpMsg(msg,color='var(--text-muted)'){
+  const el=document.getElementById('syncMsg');
+  if(el){el.style.color=color;el.textContent=msg;}
+}
 
-// ── Friends ──
+// ── Friends panel ──
 function openFriendsPanel(){
   document.getElementById('friendsPanel').style.display='flex';
   if(!_tpCode){
     document.getElementById('friendsNeedSync').style.display='block';
     document.getElementById('friendsContent').style.display='none';
-  } else {
+  }else{
     document.getElementById('friendsNeedSync').style.display='none';
     document.getElementById('friendsContent').style.display='flex';
     loadFriends();
@@ -6185,12 +6149,11 @@ async function addFriend(){
   const code=(document.getElementById('addFriendInput').value||'').trim().toUpperCase();
   const msgEl=document.getElementById('friendMsg');
   if(code.length!==6){msgEl.textContent='Enter a 6-letter code';msgEl.style.color='#ef4444';return;}
-  if(code===_tpCode){msgEl.textContent="That's your own code!";msgEl.style.color='#f59e0b';return;}
+  if(code===_tpCode){msgEl.textContent="That\'s your own code!";msgEl.style.color='#f59e0b';return;}
   msgEl.textContent='Looking up…';msgEl.style.color='var(--text-muted)';
   try{
-    const idx=await tpReadIndex();
-    if(!idx.codes[code]){msgEl.textContent='Code not found';msgEl.style.color='#ef4444';return;}
-    // Add to friends list
+    const d=await tpRead(code);
+    if(!d){msgEl.textContent='Code not found';msgEl.style.color='#ef4444';return;}
     const friends=JSON.parse(localStorage.getItem('tp_friends')||'[]');
     if(friends.includes(code)){msgEl.textContent='Already a friend!';msgEl.style.color='#f59e0b';return;}
     friends.push(code);
@@ -6206,22 +6169,19 @@ async function loadFriends(){
   const list=document.getElementById('friendsList');
   const friends=JSON.parse(localStorage.getItem('tp_friends')||'[]');
   if(!friends.length){
-    list.innerHTML='<div style="text-align:center;padding:30px;color:var(--text-muted);font-size:13px;">No friends yet.<br>Add someone by their sync code!</div>';
+    list.innerHTML='<div style="text-align:center;padding:30px;color:var(--text-muted);font-size:13px;">No friends yet.<br>Share your sync code and add theirs!</div>';
     return;
   }
-  list.innerHTML='<div style="text-align:center;color:var(--text-muted);font-size:12px;">Loading…</div>';
-  const idx=await tpReadIndex().catch(()=>({codes:{}}));
+  list.innerHTML='<div style="text-align:center;color:var(--text-muted);font-size:12px;padding:10px;">Loading…</div>';
   list.innerHTML='';
   for(const code of friends){
-    const blobId=idx.codes[code];
     let u={name:'Unknown',avatar:'🐱',pct:0,streak:0,xp:0};
-    if(blobId){try{u=await tpReadBlob(blobId);}catch(e){}}
+    try{const d=await tpRead(code);if(d)u=d;}catch(e){}
     const pct=u.pct||0;
     const bar=pct>=80?'#10b981':pct>=50?'#f59e0b':'#6366f1';
     const card=document.createElement('div');
     card.style.cssText='padding:14px 16px;background:var(--bg);border-radius:14px;border:1px solid var(--card-border);display:flex;align-items:center;gap:12px;';
-    card.innerHTML=`
-      <div style="font-size:28px;flex-shrink:0;">${u.avatar||'🐱'}</div>
+    card.innerHTML=`<div style="font-size:28px;flex-shrink:0;">${u.avatar||'🐱'}</div>
       <div style="flex:1;min-width:0;">
         <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px;">${u.name||'Friend'} <span style="font-size:10px;color:var(--text-muted);font-family:monospace;">${code}</span></div>
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">🔥 ${u.streak||0} streak · Lv ${xpToLevel(u.xp||0)} · ${pct}% this week</div>
@@ -6242,7 +6202,7 @@ async function removeFriend(code){
   loadFriends();
 }
 
-// ── Hook into app saves to auto-push ──
+// ── Hook into app saves ──
 (function(){
   const _orig=window.saveSched;
   if(_orig)window.saveSched=function(s){_orig(s);setTimeout(tpPush,500);};
@@ -6253,13 +6213,11 @@ async function removeFriend(code){
 // ── Auto-reconnect on load ──
 (function(){
   const code=localStorage.getItem(TP_CODE_KEY);
-  const blobId=localStorage.getItem(TP_BLOB_KEY);
-  if(code&&blobId){
-    _tpCode=code;_tpBlobId=blobId;
+  if(code){
+    _tpCode=code;
     tpStartPoll();
-    // Pull latest on load
     setTimeout(async()=>{
-      try{const d=await tpReadBlob(blobId);tpApplyRemote(d);}catch(e){}
+      try{const d=await tpRead(code);if(d)tpApplyRemote(d);}catch(e){}
     },1500);
   }
 })();
