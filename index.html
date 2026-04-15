@@ -2261,6 +2261,7 @@ td.schedule-cell.just-undone{animation:cellUndo .3s ease;}
         <label class="cust-tool-btn" style="text-align:center;cursor:pointer;">
           📥 Import<input type="file" accept=".json" onchange="importAllData(event)" style="display:none;">
         </label>
+        <button onclick="checkForUpdate()" class="cust-tool-btn" id="updateBtn" style="border-color:#10b981;color:#10b981;">🔄 Update</button>
         <div class="cust-tool-btn" style="display:flex;align-items:center;justify-content:center;gap:7px;cursor:default;">
           <span style="font-size:10px;color:var(--text-muted);">⏰</span>
           <div class="time-fmt-wrap" title="Switch time format" style="border:none;background:none;">
@@ -2906,6 +2907,43 @@ function _dvToast(msg){
     document.body.appendChild(t);}
   t.textContent=msg;t.style.opacity='1';
   clearTimeout(t._to);t._to=setTimeout(()=>{t.style.opacity='0';},3000);
+}
+
+async function checkForUpdate(){
+  const btn=document.getElementById('updateBtn');
+  if(btn){btn.textContent='Checking…';btn.style.opacity='.6';}
+  try{
+    const GITHUB_URL='https://dexttitude.github.io/TryPlanning/index.html';
+    const RAW_URL='https://raw.githubusercontent.com/dexttitude/TryPlanning/main/index.html';
+    // Fetch latest version string from GitHub
+    const res=await fetch(RAW_URL+'?t='+Date.now(),{cache:'no-store'});
+    if(!res.ok)throw new Error('Could not reach GitHub');
+    const text=await res.text();
+    const match=text.match(/const TP_VERSION\s*=\s*['"]([^'"]+)['"]/);
+    const remoteVersion=match?match[1]:'Unknown';
+    if(btn){btn.textContent='🔄 Update';btn.style.opacity='1';}
+    if(remoteVersion===TP_VERSION){
+      showNotif('✅ Already on latest version ('+TP_VERSION+')');
+      return;
+    }
+    // Newer version available
+    if(confirm('New version available!\n\nCurrent: '+TP_VERSION+'\nLatest: '+remoteVersion+'\n\nUpdate now? The app will reload with the latest version.\n(Your data is safe — it stays in your browser)')){
+      // Clear all caches
+      if('caches' in window){
+        const keys=await caches.keys();
+        await Promise.all(keys.map(k=>caches.delete(k)));
+      }
+      // Force reload from server, bypassing all cache
+      window.location.href=GITHUB_URL+'?v='+Date.now();
+    }
+  }catch(e){
+    if(btn){btn.textContent='🔄 Update';btn.style.opacity='1';}
+    // If can't reach GitHub, just force-reload current page
+    if(confirm('Could not check version. Force-reload the latest version anyway?')){
+      if('caches' in window){const keys=await caches.keys();await Promise.all(keys.map(k=>caches.delete(k)));}
+      window.location.reload(true);
+    }
+  }
 }
 
 function exportAllData(){
