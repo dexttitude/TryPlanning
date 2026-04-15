@@ -4082,6 +4082,9 @@ function sedToggleClassOnly(show){
 
 function sedApplyCell(){
   if(_sedSelRi<0||_sedSelCi<0)return;
+  // Force-commit any focused input before reading values
+  const focused=document.activeElement;
+  if(focused&&focused.blur)focused.blur();
   const name=document.getElementById('sedDfName').value.trim();
   if(name){
     _editorRows[_sedSelRi].s[_sedSelCi]=[name,_sedCurCat];
@@ -4102,19 +4105,9 @@ function sedApplyCell(){
       });
     });
     saveTileMeta(tileMeta);
-    // Flash Apply button green
-    const btn=document.querySelector('.sed-df-apply');
-    if(btn){btn.textContent='✓ Applied!';btn.classList.add('applied');}
-    // Rebuild live table immediately so tooltips/dots update
-    buildTable();buildTodayStrip();
-    sedRenderSlotList();sedRenderGrid();
-    // After short delay, deselect so user can click next tile
-    setTimeout(()=>{
-      _sedSelRi=-1;_sedSelCi=-1;
-      document.getElementById('sedDetailEmpty').classList.remove('hidden');
-      document.getElementById('sedDetailForm').classList.add('hidden');
-      if(btn){btn.textContent='✓ Apply';btn.classList.remove('applied');}
-    },700);
+    // Close popup immediately and re-render grid cleanly
+    closeSedPopup();
+    sedRenderGrid();
   }else{
     sedClearCell();
   }
@@ -6092,10 +6085,16 @@ function tpStartPoll(){
       const localTs=parseInt(localStorage.getItem('tp_last_remote')||'0');
       if(d.updatedAt&&d.updatedAt>localTs){
         localStorage.setItem('tp_last_remote',String(d.updatedAt));
+        // Only rebuild UI if actual data changed (prevents visual flash)
+        const prevWeek=localStorage.getItem('dv_s')||'{}';
+        const prevNotes=localStorage.getItem('dv_n')||'';
+        const dataChanged=d['dv_s']!==prevWeek||d['dv_n']!==prevNotes;
         tpApplyRemote(d);
-        // Show subtle sync indicator
-        const btn=document.getElementById('tbBtnSync');
-        if(btn){btn.textContent='☁️ Synced';setTimeout(()=>{btn.textContent='☁️ Sync';},2000);}
+        // Silent indicator — just update button text briefly, no flash
+        if(dataChanged){
+          const btn=document.getElementById('tbBtnSync');
+          if(btn){btn.style.opacity='.5';setTimeout(()=>{btn.style.opacity='1';},600);}
+        }
       }
     }catch(e){}
   }
@@ -6116,6 +6115,7 @@ async function generateSyncCode(){
     await tpWrite(code,tpGetLocalData());
     _tpCode=code;
     localStorage.setItem(TP_CODE_KEY,code);
+    sessionStorage.setItem(TP_CODE_KEY,code);
     showSyncConnected(code);
     tpStartPoll();
     showNotif('☁️ Sync enabled! Your code: '+code);
@@ -6132,6 +6132,7 @@ async function connectSyncCode(){
     if(!d){tpMsg('Code not found — check and try again','#ef4444');return;}
     _tpCode=code;
     localStorage.setItem(TP_CODE_KEY,code);
+    sessionStorage.setItem(TP_CODE_KEY,code);
     tpApplyRemote(d);
     showSyncConnected(code);
     tpStartPoll();
@@ -6188,7 +6189,7 @@ function closeFriendsPanel(){document.getElementById('friendsPanel').style.displ
 async function addFriend(){
   const code=(document.getElementById('addFriendInput').value||'').trim().toUpperCase();
   const msgEl=document.getElementById('friendMsg');
-  if(code.length!==6){msgEl.textContent='Enter a 6-letter code';msgEl.style.color='#ef4444';return;}
+  if(code.length<4||code.length>8){msgEl.textContent='Check the code — it should be 6 characters';msgEl.style.color='#ef4444';return;}
   if(code===_tpCode){msgEl.textContent="That\'s your own code!";msgEl.style.color='#f59e0b';return;}
   msgEl.textContent='Looking up…';msgEl.style.color='var(--text-muted)';
   try{
@@ -6317,9 +6318,13 @@ async function removeFriend(code){
 
 // ── Auto-reconnect on load ──
 (function(){
-  const code=localStorage.getItem(TP_CODE_KEY);
+  // Try localStorage first, then sessionStorage as backup
+  const code=localStorage.getItem(TP_CODE_KEY)||sessionStorage.getItem(TP_CODE_KEY);
   if(code){
     _tpCode=code;
+    // Always persist in both stores
+    localStorage.setItem(TP_CODE_KEY,code);
+    sessionStorage.setItem(TP_CODE_KEY,code);
     tpStartPoll();
     setTimeout(async()=>{
       try{const d=await tpRead(code);if(d)tpApplyRemote(d);}catch(e){}
