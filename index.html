@@ -1860,7 +1860,6 @@ td.schedule-cell:hover .cell-hover-tip{opacity:1;}
 .hd-task-name{flex:1;font-size:11px;font-weight:500;color:var(--text);}
 .hd-task-time{font-size:10px;color:var(--text-muted);}
 .hd-none{font-size:12px;color:var(--text-subtle);text-align:center;padding:8px 0;}
-</style>
 /* ── Extra cell animations ── */
 @keyframes cellDone{0%{transform:scale(1)}30%{transform:scale(1.18) rotate(-3deg)}60%{transform:scale(.95) rotate(1deg)}100%{transform:scale(1) rotate(0)}}
 @keyframes cellUndo{0%{transform:scale(1)}25%{transform:scale(.88)}65%{transform:scale(1.06)}100%{transform:scale(1)}}
@@ -1869,19 +1868,16 @@ td.schedule-cell:hover .cell-hover-tip{opacity:1;}
 .tp-logo-opt{border-radius:10px;padding:8px;cursor:pointer;border:2.5px solid transparent;transition:all .2s;display:flex;align-items:center;justify-content:center;background:var(--bg);}
 .tp-logo-opt:hover{border-color:var(--accent);transform:scale(1.08);}
 .tp-logo-opt.selected{border-color:var(--accent);background:var(--accent-bg);}
-/* Progress bar aesthetic animations */
 body.aes-glass .progress-bar{animation:progressPulse 3s ease-in-out infinite;}
 body.aes-space .progress-bar{animation:progressPulse 2s ease-in-out infinite;}
 body.aes-vibrant .progress-bar{animation:progressPulse 1.5s ease-in-out infinite;}
 body.aes-cloudy .progress-bar{animation:progressPulse 4s ease-in-out infinite;}
-/* Edit mode cell animation */
 .sed-cell:active{transform:scale(.94);transition:transform .1s;}
-/* Done cell richer animation */
 td.schedule-cell.just-done{animation:cellDone .4s cubic-bezier(.34,1.56,.64,1);}
 td.schedule-cell.just-undone{animation:cellUndo .3s ease;}
+</style>
 <style id="themeVars">/* theme injected by JS */</style>
 <style id="aestheticVars">/* aesthetic injected by JS */</style>
-<!-- Firebase SDK -->
 </head>
 <body>
 
@@ -2927,7 +2923,7 @@ async function checkForUpdate(){
       return;
     }
     // Newer version available
-    if(confirm('New version available!\n\nCurrent: '+TP_VERSION+'\nLatest: '+remoteVersion+'\n\nUpdate now? The app will reload with the latest version.\n(Your data is safe — it stays in your browser)')){
+    if(confirm('Update available! 🎉\n\nYou have: '+TP_VERSION+'\nLatest: '+remoteVersion+'\n\nTap OK to update — your data stays safe.')){
       // Clear all caches
       if('caches' in window){
         const keys=await caches.keys();
@@ -2939,7 +2935,7 @@ async function checkForUpdate(){
   }catch(e){
     if(btn){btn.textContent='🔄 Update';btn.style.opacity='1';}
     // If can't reach GitHub, just force-reload current page
-    if(confirm('Could not check version. Force-reload the latest version anyway?')){
+    if(confirm('Could not check GitHub. Reload to get the latest version?')){
       if('caches' in window){const keys=await caches.keys();await Promise.all(keys.map(k=>caches.delete(k)));}
       window.location.reload(true);
     }
