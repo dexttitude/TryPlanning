@@ -5660,343 +5660,6 @@ const _origApplyAes2=window.applyAesthetic;
 if(_origApplyAes2){window.applyAesthetic=function(id){_origApplyAes2(id);applyAllFontPaints();applyAllResizes();};}
 </script>
 
-<!-- ═══ FIREBASE SYNC + FRIENDS ═══ -->
-
-<!-- Sync Setup Modal -->
-<div id="syncModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;display:none;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:var(--card-bg);border-radius:20px;padding:28px;width:420px;max-width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);font-family:inherit;">
-    <h3 style="margin:0 0 6px;font-size:18px;color:var(--text);">☁️ Sync Setup</h3>
-    <p style="margin:0 0 18px;font-size:13px;color:var(--text-muted);">Connect to the cloud so your schedule syncs across all your devices in real time.</p>
-    <div id="syncStatusBar" style="padding:10px 14px;border-radius:10px;font-size:12px;font-weight:600;margin-bottom:16px;display:none;"></div>
-    <!-- Step 1: Firebase config -->
-    <div id="syncStep1">
-      <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);">Firebase Config (paste as JSON)</label>
-      <p style="font-size:11px;color:var(--text-muted);margin:4px 0 8px;">Go to <b>console.firebase.google.com</b> → New project → Web app → Copy the firebaseConfig object and paste it below.</p>
-      <textarea id="syncConfigInput" rows="7" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1.5px solid var(--card-border);background:var(--bg);color:var(--text);font-size:11px;font-family:monospace;resize:none;outline:none;" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}'></textarea>
-      <div style="display:flex;gap:8px;margin-top:12px;">
-        <button onclick="closeSyncModal()" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid var(--card-border);background:none;color:var(--text-muted);font-size:13px;cursor:pointer;font-family:inherit;">Cancel</button>
-        <button onclick="connectFirebase()" style="flex:2;padding:10px;border-radius:10px;border:none;background:#6366f1;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Connect & Sync ☁️</button>
-      </div>
-      <button onclick="disconnectFirebase()" style="width:100%;margin-top:8px;padding:8px;border-radius:10px;border:1.5px solid #fca5a5;background:none;color:#ef4444;font-size:12px;cursor:pointer;font-family:inherit;">Disconnect / Use Local Only</button>
-    </div>
-  </div>
-</div>
-
-<!-- Friends Modal -->
-<div id="friendsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:var(--card-bg);border-radius:20px;padding:0;width:460px;max-width:100%;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);font-family:inherit;overflow:hidden;">
-    <!-- Header -->
-    <div style="padding:20px 24px 16px;border-bottom:1px solid var(--card-border);flex-shrink:0;">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <h3 style="margin:0;font-size:17px;color:var(--text);">👥 Friends</h3>
-        <button onclick="closeFriends()" style="border:none;background:none;font-size:20px;cursor:pointer;color:var(--text-muted);">×</button>
-      </div>
-      <!-- My code -->
-      <div id="myCodeRow" style="display:none;margin-top:12px;padding:10px 14px;background:var(--accent-bg);border-radius:10px;border:1.5px solid var(--accent);">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--accent);margin-bottom:4px;">Your Friend Code</div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <span id="myFriendCode" style="font-size:15px;font-weight:700;color:var(--text);letter-spacing:1px;font-family:monospace;"></span>
-          <button onclick="copyFriendCode()" style="padding:4px 10px;border-radius:7px;border:1.5px solid var(--accent);background:none;color:var(--accent);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">Copy</button>
-        </div>
-      </div>
-      <!-- No sync notice -->
-      <div id="friendsNoSync" style="display:none;margin-top:12px;padding:10px 14px;background:#fef3c7;border-radius:10px;border:1.5px solid #f59e0b;font-size:12px;color:#92400e;">
-        ⚠️ Set up Sync first to use Friends. <button onclick="closeFriends();openSyncSetup();" style="border:none;background:none;color:#92400e;font-weight:700;cursor:pointer;text-decoration:underline;font-family:inherit;">Set up now →</button>
-      </div>
-    </div>
-    <!-- Add friend -->
-    <div id="addFriendSection" style="display:none;padding:14px 24px;border-bottom:1px solid var(--card-border);flex-shrink:0;">
-      <div style="display:flex;gap:8px;">
-        <input id="addFriendInput" placeholder="Enter friend's code..." style="flex:1;padding:9px 12px;border-radius:10px;border:1.5px solid var(--card-border);background:var(--bg);color:var(--text);font-size:13px;font-family:inherit;outline:none;" onkeydown="if(event.key==='Enter')addFriend()">
-        <button onclick="addFriend()" style="padding:9px 16px;border-radius:10px;border:none;background:#10b981;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Add</button>
-      </div>
-    </div>
-    <!-- Friends list -->
-    <div id="friendsList" style="flex:1;overflow-y:auto;padding:14px 24px;display:flex;flex-direction:column;gap:10px;">
-      <div style="text-align:center;padding:30px;color:var(--text-muted);font-size:13px;">Loading friends…</div>
-    </div>
-  </div>
-</div>
-
-<script>
-// ═══════════════════════════════════════════════════════
-//  TRYPLANNING — FIREBASE SYNC + FRIENDS
-// ═══════════════════════════════════════════════════════
-const TP_CFG_KEY='tp_firebase_cfg';
-const TP_UID_KEY='tp_uid';
-let _db=null,_auth=null,_fbApp=null,_tpUid=null,_syncUnsubscribe=null;
-
-// ── Helpers ──
-function tpShowStatus(msg,color='#6366f1'){
-  const el=document.getElementById('syncStatusBar');
-  if(!el)return;
-  el.style.display='block';
-  el.style.background=color==='red'?'#fef2f2':color==='green'?'#f0fdf4':'#eef2ff';
-  el.style.color=color==='red'?'#dc2626':color==='green'?'#16a34a':'#4338ca';
-  el.style.border=`1.5px solid ${color==='red'?'#fca5a5':color==='green'?'#86efac':'#a5b4fc'}`;
-  el.textContent=msg;
-}
-
-// ── Open / Close Modals ──
-function openSyncSetup(){
-  const modal=document.getElementById('syncModal');
-  modal.style.display='flex';
-  // Pre-fill if config exists
-  const saved=localStorage.getItem(TP_CFG_KEY);
-  if(saved){
-    document.getElementById('syncConfigInput').value=saved;
-    if(_tpUid)tpShowStatus('✅ Connected — User ID: '+_tpUid.slice(0,8)+'…','green');
-  }
-}
-function closeSyncModal(){document.getElementById('syncModal').style.display='none';}
-
-function openFriends(){
-  document.getElementById('friendsModal').style.display='flex';
-  if(!_tpUid){
-    document.getElementById('myCodeRow').style.display='none';
-    document.getElementById('addFriendSection').style.display='none';
-    document.getElementById('friendsNoSync').style.display='block';
-    document.getElementById('friendsList').innerHTML='';
-    return;
-  }
-  document.getElementById('friendsNoSync').style.display='none';
-  document.getElementById('myCodeRow').style.display='block';
-  document.getElementById('addFriendSection').style.display='block';
-  document.getElementById('myFriendCode').textContent=_tpUid.slice(0,12).toUpperCase();
-  loadFriendsList();
-}
-function closeFriends(){document.getElementById('friendsModal').style.display='none';}
-
-// ── Firebase Connect ──
-function connectFirebase(){
-  const raw=document.getElementById('syncConfigInput').value.trim();
-  let cfg;
-  try{
-    // Accept either raw object or JSON string
-    const cleaned=raw.replace(/^[^{]*/,'').replace(/[^}]*$/,'');
-    cfg=JSON.parse(cleaned);
-    if(!cfg.apiKey||!cfg.projectId)throw new Error('Missing fields');
-  }catch(e){
-    tpShowStatus('❌ Invalid config — paste the firebaseConfig object exactly','red');
-    return;
-  }
-  localStorage.setItem(TP_CFG_KEY,JSON.stringify(cfg));
-  tpShowStatus('Connecting…');
-  initFirebase(cfg);
-}
-
-function disconnectFirebase(){
-  if(_syncUnsubscribe)_syncUnsubscribe();
-  localStorage.removeItem(TP_CFG_KEY);
-  _db=null;_auth=null;_tpUid=null;_fbApp=null;
-  closeSyncModal();
-  showNotif('Sync disconnected — using local storage only');
-}
-
-async function initFirebase(cfg){
-  try{
-    // Init or reuse app
-    if(firebase.apps.length){
-      _fbApp=firebase.apps[0];
-    } else {
-      _fbApp=firebase.initializeApp(cfg);
-    }
-    _auth=firebase.auth();
-    _db=firebase.firestore();
-
-    // Enable offline persistence
-    try{await _db.enablePersistence({synchronizeTabs:true});}catch(e){}
-
-    // Sign in anonymously
-    const result=await _auth.signInAnonymously();
-    _tpUid=result.user.uid;
-    localStorage.setItem(TP_UID_KEY,_tpUid);
-
-    tpShowStatus('✅ Connected! User ID: '+_tpUid.slice(0,8)+'…','green');
-
-    // Push current local data up first
-    await tpPushAll();
-    // Then subscribe to remote changes
-    tpSubscribe();
-
-    showNotif('☁️ Sync enabled! Your schedule now syncs across devices.');
-    setTimeout(()=>closeSyncModal(),2000);
-  }catch(e){
-    tpShowStatus('❌ Error: '+e.message,'red');
-  }
-}
-
-// ── Sync: Push all local data to Firestore ──
-async function tpPushAll(){
-  if(!_db||!_tpUid)return;
-  const name=loadName()||'';
-  const {tot,don}=countCells();
-  const pct=tot?Math.round(don/tot*100):0;
-  const data={
-    name,
-    avatar:localStorage.getItem('dv_avatar')||'🐱',
-    theme:localStorage.getItem('dv_theme')||'violet',
-    weekState:localStorage.getItem('dv_s')||'{}',
-    weekKey:localStorage.getItem('dv_w')||'',
-    notes:localStorage.getItem('dv_n')||'',
-    customSched:localStorage.getItem('dv_custom')||'',
-    xp:parseInt(localStorage.getItem('dv_xp')||'0'),
-    streak:getStreak(),
-    pct,
-    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-  };
-  await _db.collection('users').doc(_tpUid).set(data,{merge:true});
-}
-
-// ── Sync: Subscribe to remote changes → apply locally ──
-function tpSubscribe(){
-  if(!_db||!_tpUid)return;
-  if(_syncUnsubscribe)_syncUnsubscribe();
-  _syncUnsubscribe=_db.collection('users').doc(_tpUid)
-    .onSnapshot(snap=>{
-      if(!snap.exists)return;
-      const d=snap.data();
-      if(!d)return;
-      // Merge remote state into localStorage
-      if(d.weekState){
-        const remote=JSON.parse(d.weekState||'{}');
-        const local=JSON.parse(localStorage.getItem('dv_s')||'{}');
-        // Merge: remote wins (latest device write wins)
-        const merged={...local,...remote};
-        localStorage.setItem('dv_s',JSON.stringify(merged));
-      }
-      if(d.notes&&d.notes!==localStorage.getItem('dv_n')){
-        localStorage.setItem('dv_n',d.notes);
-        const noteEl=document.getElementById('notesArea');
-        if(noteEl&&document.activeElement!==noteEl)noteEl.value=d.notes;
-      }
-      if(d.weekKey)localStorage.setItem('dv_w',d.weekKey);
-      // Rebuild UI
-      buildTable();buildTodayStrip();updateStats();
-    });
-}
-
-// ── Sync: Called whenever state changes ──
-function tpSync(key,val){
-  if(!_db||!_tpUid)return;
-  const update={updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
-  if(key==='weekState')update.weekState=val;
-  else if(key==='notes')update.notes=val;
-  else if(key==='xp')update.xp=parseInt(val||0);
-  // Push streak + pct too
-  const {tot,don}=countCells();
-  update.pct=tot?Math.round(don/tot*100):0;
-  update.streak=getStreak();
-  update.name=loadName()||'';
-  _db.collection('users').doc(_tpUid).set(update,{merge:true});
-}
-
-// ── Friends ──
-function copyFriendCode(){
-  const code=document.getElementById('myFriendCode').textContent;
-  navigator.clipboard.writeText(code).then(()=>showNotif('Friend code copied! 📋'));
-}
-
-async function addFriend(){
-  if(!_db||!_tpUid){showNotif('Set up sync first');return;}
-  const input=document.getElementById('addFriendInput');
-  const code=(input.value||'').trim().toLowerCase();
-  if(!code){return;}
-  // Find user by short code (first 12 chars of uid)
-  try{
-    const snap=await _db.collection('users').get();
-    const match=snap.docs.find(d=>d.id.slice(0,12).toUpperCase()===code.toUpperCase());
-    if(!match){showNotif('❌ No user found with that code');return;}
-    if(match.id===_tpUid){showNotif('That\'s your own code! 😄');return;}
-    // Add to friends subcollection
-    await _db.collection('users').doc(_tpUid).collection('friends').doc(match.id).set({addedAt:firebase.firestore.FieldValue.serverTimestamp()});
-    input.value='';
-    showNotif('✅ Friend added!');
-    loadFriendsList();
-  }catch(e){showNotif('Error: '+e.message);}
-}
-
-async function loadFriendsList(){
-  if(!_db||!_tpUid)return;
-  const list=document.getElementById('friendsList');
-  list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">Loading…</div>';
-  try{
-    const friendsSnap=await _db.collection('users').doc(_tpUid).collection('friends').get();
-    if(friendsSnap.empty){
-      list.innerHTML='<div style="text-align:center;padding:30px;color:var(--text-muted);font-size:13px;">No friends yet.<br>Share your code and add theirs!</div>';
-      return;
-    }
-    list.innerHTML='';
-    for(const f of friendsSnap.docs){
-      const fid=f.id;
-      const usnap=await _db.collection('users').doc(fid).get();
-      if(!usnap.exists)continue;
-      const u=usnap.data();
-      const card=document.createElement('div');
-      card.style.cssText='padding:14px 16px;background:var(--bg);border-radius:14px;border:1px solid var(--card-border);display:flex;align-items:center;gap:12px;';
-      const pct=u.pct||0;
-      const barColor=pct>=80?'#10b981':pct>=50?'#f59e0b':'#6366f1';
-      card.innerHTML=`
-        <div style="font-size:28px;flex-shrink:0;">${u.avatar||'🐱'}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px;">${u.name||'Unknown'}</div>
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">🔥 ${u.streak||0} streak · Lv ${xpToLevel(u.xp||0)} · ${pct}% this week</div>
-          <div style="height:6px;background:var(--progress-track);border-radius:6px;overflow:hidden;">
-            <div style="height:100%;width:${pct}%;background:${barColor};border-radius:6px;transition:width .5s;"></div>
-          </div>
-        </div>
-        <button onclick="removeFriend('${fid}')" style="border:none;background:none;color:var(--text-muted);font-size:18px;cursor:pointer;flex-shrink:0;" title="Remove">×</button>
-      `;
-      list.appendChild(card);
-    }
-  }catch(e){
-    list.innerHTML='<div style="text-align:center;padding:20px;color:#ef4444;font-size:13px;">Error loading friends</div>';
-  }
-}
-
-async function removeFriend(fid){
-  if(!_db||!_tpUid)return;
-  if(!confirm('Remove this friend?'))return;
-  await _db.collection('users').doc(_tpUid).collection('friends').doc(fid).delete();
-  loadFriendsList();
-}
-
-// ── Auto-sync hooks — patch save functions ──
-(function(){
-  // Patch saveSched
-  const _origSaveSched=window.saveSched;
-  if(_origSaveSched)window.saveSched=function(s){
-    _origSaveSched(s);
-    tpSync('weekState',JSON.stringify(s));
-  };
-  // Patch saveNotes
-  const noteEl=document.getElementById('notesArea');
-  if(noteEl){
-    noteEl.addEventListener('input',()=>{
-      if(_tpUid)tpSync('notes',noteEl.value);
-    });
-  }
-  // Patch saveXP
-  const _origSaveXP=window.saveXP;
-  if(_origSaveXP)window.saveXP=function(v){
-    _origSaveXP(v);
-    tpSync('xp',v);
-  };
-})();
-
-// ── Auto-init if config already saved ──
-(function(){
-  const saved=localStorage.getItem(TP_CFG_KEY);
-  if(!saved)return;
-  try{
-    const cfg=JSON.parse(saved);
-    // Small delay so rest of app initialises first
-    setTimeout(()=>initFirebase(cfg),1200);
-  }catch(e){}
-})();
-</script>
-
-
 <!-- ═══ TRYPLANNING SYNC + FRIENDS ═══ -->
 
 <!-- Sync Panel -->
@@ -6149,6 +5812,7 @@ async function tpPush(){
 // ── Smart poll: 5s when tab visible, 30s when hidden ──
 function tpStartPoll(){
   if(_tpPollTimer)clearInterval(_tpPollTimer);
+  let _tpHasPending=false;
   async function poll(){
     if(!_tpCode)return;
     try{
@@ -6157,26 +5821,41 @@ function tpStartPoll(){
       const localTs=parseInt(localStorage.getItem('tp_last_remote')||'0');
       if(d.updatedAt&&d.updatedAt>localTs){
         localStorage.setItem('tp_last_remote',String(d.updatedAt));
-        // Only rebuild UI if actual data changed (prevents visual flash)
+        // Check if anything actually changed
         const prevWeek=localStorage.getItem('dv_s')||'{}';
         const prevNotes=localStorage.getItem('dv_n')||'';
         const dataChanged=d['dv_s']!==prevWeek||d['dv_n']!==prevNotes;
-        tpApplyRemote(d);
-        // Silent indicator — just update button text briefly, no flash
         if(dataChanged){
+          // Silently update localStorage ONLY — zero DOM changes, zero flicker
+          TP_SYNC_KEYS.forEach(k=>{if(d[k]!=null)localStorage.setItem(k,d[k]);});
+          if(d['dv_cs']){try{window.customSchedule=JSON.parse(d['dv_cs']);}catch(e){}}
+          // Show a tiny dot on the Sync button — no flash, no rebuild
+          _tpHasPending=true;
           const btn=document.getElementById('tbBtnSync');
-          if(btn){btn.style.opacity='.5';setTimeout(()=>{btn.style.opacity='1';},600);}
+          if(btn&&!btn.querySelector('.tp-dot')){
+            const dot=document.createElement('span');
+            dot.className='tp-dot';
+            dot.style.cssText='width:7px;height:7px;border-radius:50%;background:#10b981;display:inline-block;margin-left:4px;vertical-align:middle;';
+            btn.appendChild(dot);
+          }
         }
       }
     }catch(e){}
   }
-  const interval=document.hidden?30000:8000;
-  _tpPollTimer=setInterval(poll,interval);
-  // Adjust interval when visibility changes
+  // Apply pending changes only when user switches back to tab (no flicker when active)
   document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden&&_tpHasPending){
+      _tpHasPending=false;
+      const btn=document.getElementById('tbBtnSync');
+      if(btn){const dot=btn.querySelector('.tp-dot');if(dot)dot.remove();}
+      buildTable();buildTodayStrip();updateStats();
+      const noteEl=document.getElementById('notesArea');
+      if(noteEl&&document.activeElement!==noteEl)noteEl.value=localStorage.getItem('dv_n')||'';
+    }
     clearInterval(_tpPollTimer);
-    _tpPollTimer=setInterval(poll,document.hidden?30000:8000);
-  },{once:false});
+    _tpPollTimer=setInterval(poll,document.hidden?60000:15000);
+  });
+  _tpPollTimer=setInterval(poll,15000);
 }
 
 // ── Generate new sync code ──
