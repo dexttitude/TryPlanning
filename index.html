@@ -6017,9 +6017,11 @@ async function tpWriteBlob(blobId,data){return tpFetch(tpUrl(blobId),{method:'PU
 async function tpCreateBlob(data){
   const res=await fetch(tpUrl(''),{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)});
   if(!res.ok)throw new Error('HTTP '+res.status);
-  const loc=res.headers.get('location')||'';
-  const id=loc.split('/').pop();
-  if(!id)throw new Error('No blob ID returned');
+  // Try multiple header sources for the blob ID
+  const id=res.headers.get('x-jsonblob-id')||
+           (res.headers.get('location')||'').split('/').pop()||
+           (res.headers.get('X-Jsonblob-Id')||'');
+  if(!id)throw new Error('No blob ID returned (headers: '+JSON.stringify([...res.headers.entries()])+')');
   return id;
 }
 
