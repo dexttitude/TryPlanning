@@ -6016,12 +6016,21 @@ async function tpReadBlob(blobId){return tpFetch(tpUrl(blobId));}
 async function tpWriteBlob(blobId,data){return tpFetch(tpUrl(blobId),{method:'PUT',body:JSON.stringify(data)});}
 async function tpCreateBlob(data){
   const res=await fetch(tpUrl(''),{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)});
-  if(!res.ok)throw new Error('HTTP '+res.status);
-  // Try multiple header sources for the blob ID
-  const id=res.headers.get('x-jsonblob-id')||
-           (res.headers.get('location')||'').split('/').pop()||
-           (res.headers.get('X-Jsonblob-Id')||'');
-  if(!id)throw new Error('No blob ID returned (headers: '+JSON.stringify([...res.headers.entries()])+')');
+  const bodyText=await res.text();
+  if(!res.ok)throw new Error('HTTP '+res.status+' body:'+bodyText.slice(0,200));
+  // Try headers first
+  let id=res.headers.get('x-jsonblob-id')||
+         (res.headers.get('location')||'').split('/').pop()||'';
+  // Try parsing body as JSON (some proxies wrap response)
+  if(!id){
+    try{
+      const parsed=JSON.parse(bodyText);
+      // Direct blob ID in body, or wrapped in proxy format
+      id=parsed['x-jsonblob-id']||parsed.id||parsed.blobId||
+         (parsed.headers&&(parsed.headers['x-jsonblob-id']||parsed.headers.location||'').split('/').pop())||'';
+    }catch(e){}
+  }
+  if(!id)throw new Error('Debug - body:'+bodyText.slice(0,300)+' headers:'+JSON.stringify([...res.headers.entries()]));
   return id;
 }
 
