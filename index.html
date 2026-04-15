@@ -3853,30 +3853,42 @@ function buildTemplateHTML(){
   return out;
 }
 async function shareTemplate(){
-  const out=buildTemplateHTML();
-  const file=new File([out],'tryplanning-template.html',{type:'text/html'});
-  // Try native share WITH file support only
-  if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
-    try{await navigator.share({title:'TryPlanning Template',files:[file]});return;}
-    catch(e){if(e.name==='AbortError')return;}
+  const link='https://dexttitude.github.io/TryPlanning';
+  // Try native share with link first (cleanest on mobile)
+  if(navigator.share){
+    try{
+      await navigator.share({
+        title:'TryPlanning — Study Schedule App',
+        text:'Check out TryPlanning! A personal study schedule with sync across devices and friend progress tracking.',
+        url:link
+      });
+      return;
+    }catch(e){if(e.name==='AbortError')return;}
   }
-  // Download the file — most reliable approach
-  const blob=new Blob([out],{type:'text/html'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tryplanning-template.html';
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
-  setTimeout(()=>URL.revokeObjectURL(a.href),5000);
-  showShareToast();
+  // Fallback: copy link to clipboard
+  try{
+    await navigator.clipboard.writeText(link);
+    showShareToast('link');
+  }catch(e){
+    // Final fallback: show the link
+    showShareToast('show',link);
+  }
 }
-function showShareToast(){
+
+function showShareToast(type,link){
   let t=document.getElementById("shareToast");
   if(!t){
     t=document.createElement("div");t.id="shareToast";
-    t.style.cssText="position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1d1d1f;color:#fff;padding:16px 22px;border-radius:14px;font-size:13px;z-index:600;box-shadow:0 8px 30px rgba(0,0,0,.3);opacity:0;transition:all .35s ease;max-width:340px;text-align:center;line-height:1.5;font-family:inherit;";
+    t.style.cssText="position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1d1d1f;color:#fff;padding:16px 22px;border-radius:14px;font-size:13px;z-index:600;box-shadow:0 8px 30px rgba(0,0,0,.3);opacity:0;transition:all .35s ease;max-width:360px;text-align:center;line-height:1.5;font-family:inherit;";
     document.body.appendChild(t);
   }
-  t.innerHTML="<strong>✅ Template downloaded!</strong><br>Find <b>tryplanning-template.html</b> in Downloads.<br><br>⚠️ Tell them: <b>Open in Safari/Chrome</b> — not QuickLook!";
+  if(type==='link'){
+    t.innerHTML="<strong>✅ Link copied!</strong><br>Paste it to share TryPlanning with anyone.";
+  }else{
+    t.innerHTML="<strong>🔗 Share this link:</strong><br><span style='font-family:monospace;font-size:12px;color:#a5b4fc;'>"+(link||'')+"</span>";
+  }
   requestAnimationFrame(()=>{t.style.opacity="1";t.style.transform="translateX(-50%) translateY(0)";});
-  setTimeout(()=>{t.style.opacity="0";t.style.transform="translateX(-50%) translateY(20px)";},8000);
+  setTimeout(()=>{t.style.opacity="0";t.style.transform="translateX(-50%) translateY(20px)";},6000);
 }
 
 // ── SCHEDULE EDITOR ──
