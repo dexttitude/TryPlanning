@@ -6032,9 +6032,9 @@ async function tpWrite(code,data){
 // All localStorage keys to sync (full personalisation)
 const TP_SYNC_KEYS=[
   'dv_name','dv_avatar','dv_theme','dv_aes','dv_s','dv_w',
-  'dv_n','dv_cn','dv_ft','dv_h','dv_xp','dv_tf','dv_custom',
+  'dv_n','dv_cn','dv_ft','dv_h','dv_xp','dv_tf','dv_cs',
   'dv_custom_cats','dv_appt','dv_tile_meta','tp_friends',
-  'dv_game_hi','dv_12h','dv_flip_size','dv_yt_enabled'
+  'dv_game_hi','dv_12h','dv_flip_size','dv_yt_enabled','dv_purpose'
 ];
 
 function tpGetLocalData(){
@@ -6049,17 +6049,28 @@ function tpGetLocalData(){
 // ── Apply remote data — full restore ──
 function tpApplyRemote(d){
   if(!d)return;
-  // Apply all synced keys
+  // Write all synced keys to localStorage
   TP_SYNC_KEYS.forEach(k=>{if(d[k]!=null)localStorage.setItem(k,d[k]);});
-  // Re-apply theme + aesthetic
-  const theme=d['dv_theme'];const aes=d['dv_aes'];
-  if(theme&&window.applyTheme)applyTheme(theme);
-  if(aes&&window.applyAesthetic)applyAesthetic(aes);
-  // Rebuild UI
-  buildTable();buildTodayStrip();updateStats();
+  // Reload in-memory variables that the app uses
+  if(d['dv_cs']){
+    try{window.customSchedule=JSON.parse(d['dv_cs']);}catch(e){window.customSchedule=null;}
+  }
+  if(d['dv_name']&&window.saveName)saveName(d['dv_name']);
+  if(d['dv_avatar']&&window.saveAvatarId)saveAvatarId(d['dv_avatar']);
+  // Re-apply theme + aesthetic (updates CSS vars + classes)
+  if(d['dv_theme']&&window.applyTheme)applyTheme(d['dv_theme']);
+  if(d['dv_aes']&&window.applyAesthetic)applyAesthetic(d['dv_aes']);
+  // Reload time format
+  if(d['dv_tf']){window._timeFmt=d['dv_tf'];}
+  // Rebuild all UI
+  if(window.buildTable)buildTable();
+  if(window.buildTodayStrip)buildTodayStrip();
+  if(window.updateStats)updateStats();
+  if(window.renderHeader)renderHeader();
+  // Update notes textarea
   const noteEl=document.getElementById('notesArea');
   if(noteEl&&document.activeElement!==noteEl)noteEl.value=d['dv_n']||'';
-  // Update name display
+  // Update name in header
   const nameEl=document.getElementById('ownerName');
   if(nameEl&&d['dv_name'])nameEl.textContent=d['dv_name'];
 }
