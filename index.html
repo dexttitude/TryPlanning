@@ -2170,6 +2170,24 @@ td.schedule-cell:hover .cell-hover-tip{opacity:1;}
       <button class="onboard-btn" id="onboardBtn" onclick="saveOnboarding()">Get Started →</button>
       <button class="onboard-back" onclick="onboardBack()">← Back</button>
     </div>
+
+    <!-- Already have TryPlanning? (shown on step 1) -->
+    <div id="onboardRestoreSection" style="margin-top:20px;border-top:1px solid rgba(0,0,0,.08);padding-top:16px;">
+      <div style="text-align:center;font-size:12px;color:#86868b;margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Already have TryPlanning?</div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="showOnboardSyncInput()" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #7c3aed;background:none;color:#7c3aed;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">☁️ Enter sync code</button>
+        <label style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #6b7280;background:none;color:#6b7280;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;text-align:center;">
+          📁 Import file<input type="file" accept=".json" onchange="onboardImportFile(event)" style="display:none;">
+        </label>
+      </div>
+      <div id="onboardSyncRow" style="display:none;margin-top:10px;">
+        <div style="display:flex;gap:8px;">
+          <input id="onboardSyncInput" maxlength="6" placeholder="Your 6-letter code" style="flex:1;padding:10px 12px;border-radius:10px;border:1.5px solid #7c3aed;font-size:15px;font-family:monospace;font-weight:700;letter-spacing:2px;text-transform:uppercase;outline:none;text-align:center;" oninput="this.value=this.value.toUpperCase()">
+          <button onclick="onboardConnectSync()" style="padding:10px 16px;border-radius:10px;border:none;background:#7c3aed;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Go →</button>
+        </div>
+        <div id="onboardSyncMsg" style="font-size:12px;text-align:center;color:#86868b;margin-top:6px;min-height:16px;"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2701,9 +2719,12 @@ function setOnboardStep(n){
     const dot=document.getElementById("stepDot"+i);
     dot.className="onboard-step-dot"+(n===i?" active":n>i?" done":"");
   }
+  // Show restore section only on step 0
+  const restoreSection=document.getElementById("onboardRestoreSection");
+  if(restoreSection)restoreSection.style.display=n===0?'block':'none';
   const nm=document.getElementById("onboardName").value.trim()||"there";
   if(n===0){
-    document.getElementById("onboardTitle").textContent="Welcome!";
+    document.getElementById("onboardTitle").textContent="Welcome to TryPlanning!";
     document.getElementById("onboardSub").innerHTML="Let's set up your personalised schedule.<br>Everything saves automatically in your browser.";
   } else if(n===1){
     document.getElementById("onboardTitle").textContent="Looking good, "+nm+"!";
@@ -2740,6 +2761,66 @@ function saveOnboarding(){
       if(confirm("Welcome, "+n+"! 🎉\n\nWould you like to set up your schedule now?\n(You can do it any time with ✏️ Edit → Edit Schedule)"))openEditor();
     },200);
   }
+}
+
+// ── ONBOARDING: restore from sync code ──
+function showOnboardSyncInput(){
+  const row=document.getElementById('onboardSyncRow');
+  if(row){row.style.display='block';document.getElementById('onboardSyncInput').focus();}
+}
+async function onboardConnectSync(){
+  const code=(document.getElementById('onboardSyncInput').value||'').trim().toUpperCase();
+  const msg=document.getElementById('onboardSyncMsg');
+  if(code.length<4){msg.style.color='#ef4444';msg.textContent='Enter your sync code';return;}
+  msg.style.color='#86868b';msg.textContent='Connecting…';
+  try{
+    const d=await tpRead(code);
+    if(!d){msg.style.color='#ef4444';msg.textContent='Code not found — check and try again';return;}
+    // Apply all data
+    TP_SYNC_KEYS.forEach(k=>{if(d[k]!=null)localStorage.setItem(k,d[k]);});
+    if(d['dv_cs']){try{window.customSchedule=JSON.parse(d['dv_cs']);}catch(e){}}
+    localStorage.setItem('dv_template_setup_done','1');
+    _tpCode=code;
+    localStorage.setItem(TP_CODE_KEY,code);
+    sessionStorage.setItem(TP_CODE_KEY,code);
+    // Apply visuals
+    if(d['dv_theme']&&window.applyTheme)applyTheme(d['dv_theme']);
+    if(d['dv_aes']&&window.applyAesthetic)applyAesthetic(d['dv_aes']);
+    // Hide onboarding and rebuild
+    document.getElementById('onboardOverlay').classList.add('hidden');
+    const name=d['dv_name']||'';
+    updateHeader(name,d['dv_avatar']||'kitty',d['dv_theme']||'lavender');
+    buildTable();buildTodayStrip();updateStats();loadNotesUI();
+    tpStartPoll();
+    showNotif('✅ Restored! Welcome back, '+name+' 👋');
+  }catch(e){msg.style.color='#ef4444';msg.textContent='Error: '+e.message;}
+}
+
+// ── ONBOARDING: restore from backup file ──
+function onboardImportFile(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const data=JSON.parse(ev.target.result);
+      let count=0;
+      Object.entries(data).forEach(([k,v])=>{if(k.startsWith('dv_')||k.startsWith('tp_')){localStorage.setItem(k,v);count++;}});
+      if(!count)throw new Error('No valid data found in file');
+      localStorage.setItem('dv_template_setup_done','1');
+      // Reload everything
+      const name=localStorage.getItem(K.name)||'';
+      const avatarId=loadAvatarId();const themeId=loadThemeId();
+      const aesId=loadAesId();
+      if(window.applyTheme)applyTheme(themeId);
+      if(window.applyAesthetic)applyAesthetic(aesId);
+      try{window.customSchedule=loadCustomSched();}catch(err){}
+      document.getElementById('onboardOverlay').classList.add('hidden');
+      updateHeader(name,avatarId,themeId);
+      buildTable();buildTodayStrip();updateStats();loadNotesUI();
+      showNotif('✅ Imported! Welcome back, '+name+' 👋');
+    }catch(err){alert('Could not import file: '+err.message);}
+  };
+  reader.readAsText(file);
 }
 
 // ── CUSTOMISE MODAL ──
@@ -4999,24 +5080,15 @@ function downloadShareImage(){
     applyAesthetic(loadAesId());
     const name=loadName(),avatarId=loadAvatarId(),themeId=loadThemeId();
 
-    // TEMPLATE_MODE: always show onboarding if first-time key not set
-    // This works even if the user's browser has old localStorage from another schedule file
-    const templateFirstTime=TEMPLATE_MODE&&!localStorage.getItem("dv_template_setup_done");
-    if(templateFirstTime){
-      // Clear any stale data from a different schedule file on same origin
-      Object.values(K).forEach(k=>localStorage.removeItem(k));
-      state={};ftSt={};customSchedule=null;apptList=[];
+    // Show onboarding for any new user (no name saved = never set up on this device)
+    const isNewUser=!localStorage.getItem("dv_template_setup_done")&&!localStorage.getItem(K.name);
+    if(isNewUser){
       document.getElementById("ownerName").textContent="Your";
       document.getElementById("schedTypeLabel").textContent="'s Schedule";
       document.getElementById("avatarBadge").innerHTML=getAvatarSvg("kitty");
       showOnboarding();
-    } else if(!TEMPLATE_MODE){
-      const n=name||"Devesh";
-      if(!name)saveName(n);
-      updateHeader(n,avatarId,themeId);
     } else {
-      // Template mode but already set up
-      updateHeader(name,avatarId,themeId);
+      updateHeader(name||"",avatarId,themeId);
     }
     // Apply purpose label if saved
     const storedPurpose=localStorage.getItem(K.purpose);
