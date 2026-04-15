@@ -1861,6 +1861,24 @@ td.schedule-cell:hover .cell-hover-tip{opacity:1;}
 .hd-task-time{font-size:10px;color:var(--text-muted);}
 .hd-none{font-size:12px;color:var(--text-subtle);text-align:center;padding:8px 0;}
 </style>
+/* ── Extra cell animations ── */
+@keyframes cellDone{0%{transform:scale(1)}30%{transform:scale(1.18) rotate(-3deg)}60%{transform:scale(.95) rotate(1deg)}100%{transform:scale(1) rotate(0)}}
+@keyframes cellUndo{0%{transform:scale(1)}25%{transform:scale(.88)}65%{transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes progressPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25)}}
+@keyframes logoFloat{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-3px) rotate(2deg)}}
+.tp-logo-opt{border-radius:10px;padding:8px;cursor:pointer;border:2.5px solid transparent;transition:all .2s;display:flex;align-items:center;justify-content:center;background:var(--bg);}
+.tp-logo-opt:hover{border-color:var(--accent);transform:scale(1.08);}
+.tp-logo-opt.selected{border-color:var(--accent);background:var(--accent-bg);}
+/* Progress bar aesthetic animations */
+body.aes-glass .progress-bar{animation:progressPulse 3s ease-in-out infinite;}
+body.aes-space .progress-bar{animation:progressPulse 2s ease-in-out infinite;}
+body.aes-vibrant .progress-bar{animation:progressPulse 1.5s ease-in-out infinite;}
+body.aes-cloudy .progress-bar{animation:progressPulse 4s ease-in-out infinite;}
+/* Edit mode cell animation */
+.sed-cell:active{transform:scale(.94);transition:transform .1s;}
+/* Done cell richer animation */
+td.schedule-cell.just-done{animation:cellDone .4s cubic-bezier(.34,1.56,.64,1);}
+td.schedule-cell.just-undone{animation:cellUndo .3s ease;}
 <style id="themeVars">/* theme injected by JS */</style>
 <style id="aestheticVars">/* aesthetic injected by JS */</style>
 <!-- Firebase SDK -->
@@ -1948,6 +1966,8 @@ td.schedule-cell:hover .cell-hover-tip{opacity:1;}
     </div>
   </div>
   <div class="header">
+    <!-- TryPlanning Logo (top-left) -->
+    <div id="tpLogo" onclick="openLogoPicker()" title="Change logo" style="position:absolute;top:10px;left:14px;cursor:pointer;z-index:10;user-select:none;"></div>
     <h1>
       <div class="avatar-badge" id="avatarBadge" onclick="openCustomise()" title="Edit"></div>
       <span class="title-text"><span class="owner-name" id="ownerName">Loading…</span><span class="sched-suffix" id="schedTypeLabel">'s Schedule</span></span>
@@ -2154,18 +2174,10 @@ td.schedule-cell:hover .cell-hover-tip{opacity:1;}
       <button class="onboard-btn" id="onboardNextBtn" onclick="onboardNext()">Next → Choose Theme</button>
     </div>
 
-    <!-- Step 2: Theme -->
+    <!-- Step 2: Aesthetic only (theme removed) -->
     <div class="onboard-step" id="onboardStep1">
-      <label class="field-label">🎨 Choose Your Theme</label>
-      <div class="theme-grid" id="onboardThemeGrid"></div>
-      <button class="onboard-btn" id="onboardStep1Next" onclick="onboardNext()">Next → Choose Aesthetic</button>
-      <button class="onboard-back" onclick="onboardBack()">← Back</button>
-    </div>
-
-    <!-- Step 3: Aesthetic -->
-    <div class="onboard-step" id="onboardStep2">
-      <label class="field-label">✨ Choose Your Aesthetic</label>
-      <div class="field-label-sub" style="font-size:12px;color:rgba(255,255,255,.65);margin:-6px 0 10px;text-align:center;">Each aesthetic changes the layout, size and feel — not just colours</div>
+      <label class="field-label">✨ Choose Your Look</label>
+      <div class="field-label-sub" style="font-size:12px;color:rgba(255,255,255,.65);margin:-6px 0 10px;text-align:center;">Pick a style — changes the whole layout and feel</div>
       <div class="modal-aes-grid" id="onboardAesGrid" style="max-width:420px;margin:0 auto 12px;"></div>
       <button class="onboard-btn" id="onboardBtn" onclick="saveOnboarding()">Get Started →</button>
       <button class="onboard-back" onclick="onboardBack()">← Back</button>
@@ -2188,6 +2200,22 @@ td.schedule-cell:hover .cell-hover-tip{opacity:1;}
         <div id="onboardSyncMsg" style="font-size:12px;text-align:center;color:#86868b;margin-top:6px;min-height:16px;"></div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Logo Picker Modal -->
+<div id="logoPickerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--card-bg);border-radius:20px;padding:24px;width:440px;max-width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);font-family:inherit;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 style="margin:0;font-size:17px;color:var(--text);">TryPlanning Logo</h3>
+      <button onclick="closeLogoPicker()" style="border:none;background:none;font-size:22px;cursor:pointer;color:var(--text-muted);">×</button>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);">Size</label>
+      <input type="range" id="logoSizeSlider" min="20" max="60" value="32" style="width:100%;margin-top:6px;" oninput="updateLogoSize(this.value)">
+    </div>
+    <div id="logoGrid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;"></div>
+    <button onclick="closeLogoPicker()" style="width:100%;padding:10px;border-radius:10px;border:none;background:var(--accent-bg);color:var(--accent);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Done</button>
   </div>
 </div>
 
@@ -2307,6 +2335,7 @@ td.schedule-cell:hover .cell-hover-tip{opacity:1;}
       <button class="sed-add-slot" onclick="sedAddSlot()">＋ Add row</button>
     </div>
     <div style="display:flex;gap:6px;align-items:center;">
+      <span style="font-size:10px;color:var(--text-muted);margin-right:6px;font-family:monospace;" id="tpVersionLabel"></span>
       <button class="sed-btn-reset" onclick="resetEditorToDefault()">↩ Reset</button>
       <button class="sed-btn-cancel" onclick="closeEditor()">Cancel</button>
       <button class="sed-btn-save" onclick="saveEditor()">💾 Save</button>
@@ -2696,8 +2725,7 @@ function showOnboarding(){
   _obAv="kitty";_obTheme="lavender";_obPurpose="study";_obAes="default";_obStep=0;
   buildAvGrid("onboardAvGrid","av-opt","kitty",id=>{_obAv=id;});
   buildPurposeGrid();
-  buildThemeGrid("onboardThemeGrid","theme-opt","theme-dot","theme-name","lavender",id=>{_obTheme=id;applyTheme(id);const t=THEMES.find(x=>x.id===id);if(t)document.getElementById("onboardStep1Next").style.background=t.bg;});
-  buildAesGrid("onboardAesGrid","default",id=>{_obAes=id;});
+  buildAesGrid("onboardAesGrid","default",id=>{_obAes=id;applyAesthetic(id);});
   setOnboardStep(0);
   document.getElementById("onboardOverlay").classList.remove("hidden");
   setTimeout(()=>document.getElementById("onboardName").focus(),100);
@@ -2714,24 +2742,24 @@ function buildPurposeGrid(){
 }
 function setOnboardStep(n){
   _obStep=n;
-  for(let i=0;i<3;i++){
-    document.getElementById("onboardStep"+i).classList.toggle("active",n===i);
+  // Only 2 steps now (0 and 1)
+  for(let i=0;i<2;i++){
+    const stepEl=document.getElementById("onboardStep"+i);
+    if(stepEl)stepEl.classList.toggle("active",n===i);
     const dot=document.getElementById("stepDot"+i);
-    dot.className="onboard-step-dot"+(n===i?" active":n>i?" done":"");
+    if(dot)dot.className="onboard-step-dot"+(n===i?" active":n>i?" done":"");
   }
-  // Show restore section only on step 0
+  const dot2=document.getElementById("stepDot2");
+  if(dot2)dot2.style.display='none';// hide third dot
   const restoreSection=document.getElementById("onboardRestoreSection");
   if(restoreSection)restoreSection.style.display=n===0?'block':'none';
   const nm=document.getElementById("onboardName").value.trim()||"there";
   if(n===0){
     document.getElementById("onboardTitle").textContent="Welcome to TryPlanning!";
     document.getElementById("onboardSub").innerHTML="Let's set up your personalised schedule.<br>Everything saves automatically in your browser.";
-  } else if(n===1){
-    document.getElementById("onboardTitle").textContent="Looking good, "+nm+"!";
-    document.getElementById("onboardSub").innerHTML="Now pick a colour theme that suits your vibe.";
   } else {
     document.getElementById("onboardTitle").textContent="Almost there, "+nm+"!";
-    document.getElementById("onboardSub").innerHTML="Choose an aesthetic to change the entire look and layout.";
+    document.getElementById("onboardSub").innerHTML="Choose a look — you can always change it later.";
   }
 }
 function onboardNext(){
@@ -2739,8 +2767,6 @@ function onboardNext(){
     const n=document.getElementById("onboardName").value.trim();
     if(!n){document.getElementById("onboardName").focus();document.getElementById("onboardName").style.borderColor="#ef4444";setTimeout(()=>{document.getElementById("onboardName").style.borderColor="";},1500);return;}
     setOnboardStep(1);
-  } else if(_obStep===1){
-    setOnboardStep(2);
   }
 }
 function onboardBack(){setOnboardStep(Math.max(0,_obStep-1));}
@@ -2751,9 +2777,8 @@ function saveOnboarding(){
   saveAesId(_obAes);applyAesthetic(_obAes);
   localStorage.setItem(K.purpose,_obPurpose);
   localStorage.setItem("dv_template_setup_done","1");
-  // Update schedule title based on purpose
   const pObj=PURPOSES.find(p=>p.id===_obPurpose);
-  if(pObj) document.getElementById("schedTypeLabel").textContent="'s "+pObj.label;
+  if(pObj)document.getElementById("schedTypeLabel").textContent="'s "+pObj.label;
   updateHeader(n,_obAv,_obTheme);
   document.getElementById("onboardOverlay").classList.add("hidden");
   if(!loadCustomSched()){
@@ -2802,23 +2827,37 @@ function onboardImportFile(e){
   const reader=new FileReader();
   reader.onload=function(ev){
     try{
-      const data=JSON.parse(ev.target.result);
-      let count=0;
-      Object.entries(data).forEach(([k,v])=>{if(k.startsWith('dv_')||k.startsWith('tp_')){localStorage.setItem(k,v);count++;}});
-      if(!count)throw new Error('No valid data found in file');
+      let raw=ev.target.result.trim();
+      let data;
+      // Handle both raw JSON object and exported backup format
+      try{data=JSON.parse(raw);}catch(err){throw new Error('File is not valid JSON — make sure you export from TryPlanning');}
+      // The export format stores keys directly or nested under a data key
+      const flat={};
+      function extractKeys(obj){
+        Object.entries(obj).forEach(([k,v])=>{
+          if(typeof v==='string'&&(k.startsWith('dv_')||k.startsWith('tp_'))){flat[k]=v;}
+          else if(typeof v==='object'&&v!==null)extractKeys(v);
+        });
+      }
+      extractKeys(data);
+      if(!Object.keys(flat).length)throw new Error('No TryPlanning data found in this file');
+      Object.entries(flat).forEach(([k,v])=>localStorage.setItem(k,v));
       localStorage.setItem('dv_template_setup_done','1');
-      // Reload everything
       const name=localStorage.getItem(K.name)||'';
-      const avatarId=loadAvatarId();const themeId=loadThemeId();
-      const aesId=loadAesId();
+      const themeId=loadThemeId();const aesId=loadAesId();const avatarId=loadAvatarId();
       if(window.applyTheme)applyTheme(themeId);
       if(window.applyAesthetic)applyAesthetic(aesId);
-      try{window.customSchedule=loadCustomSched();}catch(err){}
+      try{window.customSchedule=loadCustomSched();window.state=JSON.parse(localStorage.getItem('dv_s')||'{}');}catch(err){}
       document.getElementById('onboardOverlay').classList.add('hidden');
       updateHeader(name,avatarId,themeId);
-      buildTable();buildTodayStrip();updateStats();loadNotesUI();
-      showNotif('✅ Imported! Welcome back, '+name+' 👋');
-    }catch(err){alert('Could not import file: '+err.message);}
+      buildTable();buildTodayStrip();updateStats();
+      try{loadNotesUI();}catch(err){}
+      showNotif('✅ Imported! Welcome back'+(name?', '+name:'')+' 👋');
+    }catch(err){
+      const msg=document.getElementById('onboardSyncMsg');
+      if(msg){msg.textContent='❌ '+err.message;msg.style.color='#ef4444';}
+      else alert('Import failed: '+err.message);
+    }
   };
   reader.readAsText(file);
 }
@@ -5671,13 +5710,18 @@ if(_origApplyAes2){window.applyAesthetic=function(id){_origApplyAes2(id);applyAl
     </div>
     <!-- Connected state -->
     <div id="syncConnected" style="display:none;">
-      <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:14px;margin-bottom:16px;">
+      <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:14px;margin-bottom:12px;">
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#16a34a;margin-bottom:6px;">✅ Syncing across devices</div>
         <div style="font-size:13px;color:#15803d;margin-bottom:10px;">Your sync code — enter this on any device:</div>
         <div style="display:flex;align-items:center;gap:10px;">
           <span id="mySyncCode" style="font-size:22px;font-weight:800;color:#166534;letter-spacing:3px;font-family:monospace;"></span>
           <button onclick="copySyncCode()" style="padding:6px 12px;border-radius:8px;border:1.5px solid #16a34a;background:none;color:#16a34a;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Copy</button>
         </div>
+      </div>
+      <!-- Connected devices list -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:8px;">Connected Devices</div>
+        <div id="syncDeviceList" style="display:flex;flex-direction:column;gap:6px;"></div>
       </div>
       <button onclick="disconnectSync()" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #fca5a5;background:none;color:#ef4444;font-size:13px;cursor:pointer;font-family:inherit;">Disconnect</button>
     </div>
@@ -5823,13 +5867,68 @@ function tpApplyRemote(d){
 // ── Push local → kvdb ──
 async function tpPush(){
   if(!_tpCode)return;
-  try{await tpWrite(_tpCode,tpGetLocalData());}catch(e){}
+  try{await tpPushWithDevice();}catch(e){}
+}
+
+function tpUpdateDeviceList(){
+  const el=document.getElementById('syncDeviceList');
+  if(!el)return;
+  try{
+    const devices=JSON.parse(localStorage.getItem('tp_devices')||'{}');
+    const myId=tpDeviceId();
+    const entries=Object.entries(devices);
+    if(!entries.length){el.innerHTML='<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:8px;">No other devices yet</div>';return;}
+    el.innerHTML=entries.map(([id,dev])=>{
+      const isMe=id===myId;
+      const mins=Math.round((Date.now()-(dev.lastSeen||0))/60000);
+      const when=mins<2?'Active now':mins<60?`${mins}m ago`:`${Math.round(mins/60)}h ago`;
+      return`<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg);border-radius:10px;border:1px solid var(--card-border);">
+        <span style="font-size:18px;">${dev.name?.includes('iPhone')||dev.name?.includes('Android')?'📱':'💻'}</span>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:600;color:var(--text);">${dev.name||'Device'}${isMe?' <span style="font-size:10px;background:#dcfce7;color:#16a34a;padding:1px 6px;border-radius:4px;">This device</span>':''}</div>
+          <div style="font-size:11px;color:var(--text-muted);">${when}</div>
+        </div>
+        <div style="width:8px;height:8px;border-radius:50%;background:${mins<3?'#10b981':'#d1d5db'};flex-shrink:0;"></div>
+      </div>`;
+    }).join('');
+  }catch(e){el.innerHTML='';}
 }
 
 // ── Smart poll: 5s when tab visible, 30s when hidden ──
+// ── Device identity ──
+function tpDeviceId(){
+  let id=localStorage.getItem('tp_device_id');
+  if(!id){id='dev_'+Math.random().toString(36).slice(2,10);localStorage.setItem('tp_device_id',id);}
+  return id;
+}
+function tpDeviceName(){
+  const ua=navigator.userAgent;
+  if(/iPhone/.test(ua))return'📱 iPhone';
+  if(/iPad/.test(ua))return'📱 iPad';
+  if(/Android/.test(ua))return'📱 Android';
+  if(/Mac/.test(ua))return'💻 Mac';
+  if(/Windows/.test(ua))return'💻 Windows';
+  return'🖥 Device';
+}
+
+// ── Push with device info ──
+async function tpPushWithDevice(){
+  if(!_tpCode)return;
+  try{
+    const data=tpGetLocalData();
+    // Add this device to the devices list
+    const devId=tpDeviceId();
+    let devices={};
+    try{devices=JSON.parse(data['tp_devices']||'{}');}catch(e){}
+    devices[devId]={name:tpDeviceName(),lastSeen:Date.now()};
+    data['tp_devices']=JSON.stringify(devices);
+    localStorage.setItem('tp_devices',data['tp_devices']);
+    await tpWrite(_tpCode,data);
+  }catch(e){}
+}
+
 function tpStartPoll(){
   if(_tpPollTimer)clearInterval(_tpPollTimer);
-  let _tpHasPending=false;
   async function poll(){
     if(!_tpCode)return;
     try{
@@ -5838,41 +5937,65 @@ function tpStartPoll(){
       const localTs=parseInt(localStorage.getItem('tp_last_remote')||'0');
       if(d.updatedAt&&d.updatedAt>localTs){
         localStorage.setItem('tp_last_remote',String(d.updatedAt));
-        // Check if anything actually changed
+        // Silent localStorage update + immediate DOM apply (no flicker — just update changed cells)
         const prevWeek=localStorage.getItem('dv_s')||'{}';
-        const prevNotes=localStorage.getItem('dv_n')||'';
-        const dataChanged=d['dv_s']!==prevWeek||d['dv_n']!==prevNotes;
+        const dataChanged=d['dv_s']!==prevWeek;
+        // Update all keys silently
+        Object.keys(d).forEach(k=>{if((k.startsWith('dv_')||k.startsWith('tp_'))&&d[k]!=null)localStorage.setItem(k,d[k]);});
+        if(d['dv_cs']){try{window.customSchedule=JSON.parse(d['dv_cs']);}catch(e){}}
+        try{window.state=JSON.parse(localStorage.getItem('dv_s')||'{}');}catch(e){}
         if(dataChanged){
-          // Silently update localStorage ONLY — zero DOM changes, zero flicker
-          TP_SYNC_KEYS.forEach(k=>{if(d[k]!=null)localStorage.setItem(k,d[k]);});
-          if(d['dv_cs']){try{window.customSchedule=JSON.parse(d['dv_cs']);}catch(e){}}
-          // Show a tiny dot on the Sync button — no flash, no rebuild
-          _tpHasPending=true;
-          const btn=document.getElementById('tbBtnSync');
-          if(btn&&!btn.querySelector('.tp-dot')){
-            const dot=document.createElement('span');
-            dot.className='tp-dot';
-            dot.style.cssText='width:7px;height:7px;border-radius:50%;background:#10b981;display:inline-block;margin-left:4px;vertical-align:middle;';
-            btn.appendChild(dot);
-          }
+          // Apply DOM changes smoothly — only update cell states, not full rebuild
+          tpApplyCellsOnly(d);
         }
+        // Update device list silently
+        if(d['tp_devices'])localStorage.setItem('tp_devices',d['tp_devices']);
       }
     }catch(e){}
   }
-  // Apply pending changes only when user switches back to tab (no flicker when active)
+  // Fast poll: 4s when visible, 30s when hidden
+  const interval=()=>document.hidden?30000:4000;
+  _tpPollTimer=setInterval(poll,4000);
   document.addEventListener('visibilitychange',()=>{
-    if(!document.hidden&&_tpHasPending){
-      _tpHasPending=false;
-      const btn=document.getElementById('tbBtnSync');
-      if(btn){const dot=btn.querySelector('.tp-dot');if(dot)dot.remove();}
-      buildTable();buildTodayStrip();updateStats();
-      const noteEl=document.getElementById('notesArea');
-      if(noteEl&&document.activeElement!==noteEl)noteEl.value=localStorage.getItem('dv_n')||'';
-    }
     clearInterval(_tpPollTimer);
-    _tpPollTimer=setInterval(poll,document.hidden?60000:15000);
+    _tpPollTimer=setInterval(poll,interval());
+    // Push our presence when returning to tab
+    if(!document.hidden&&_tpCode)tpPushWithDevice();
   });
-  _tpPollTimer=setInterval(poll,15000);
+}
+
+// ── Apply only cell state changes (no full rebuild = no flicker) ──
+function tpApplyCellsOnly(d){
+  try{
+    const newState=JSON.parse(d['dv_s']||'{}');
+    // Update each cell individually
+    document.querySelectorAll('td.schedule-cell').forEach(td=>{
+      const key=td.dataset.key;
+      if(!key)return;
+      const isDone=!!newState[key];
+      const wasDone=td.classList.contains('done');
+      if(isDone!==wasDone){
+        td.classList.toggle('done',isDone);
+        // Smooth pulse on changed cells
+        td.style.transition='opacity .3s';
+        td.style.opacity='0.6';
+        setTimeout(()=>{td.style.opacity='1';},300);
+      }
+    });
+    // Update today strip cards silently
+    document.querySelectorAll('.today-card').forEach(card=>{
+      const key=card.dataset.key;
+      if(!key)return;
+      const isDone=!!newState[key];
+      card.classList.toggle('done',isDone);
+    });
+    // Update stats quietly
+    if(window.updateStats)updateStats();
+  }catch(e){
+    // Fallback: full rebuild if something goes wrong
+    if(window.buildTable)buildTable();
+    if(window.buildTodayStrip)buildTodayStrip();
+  }
 }
 
 // ── Generate new sync code ──
@@ -5880,20 +6003,21 @@ async function generateSyncCode(){
   tpMsg('Creating your sync code…');
   try{
     const code=tpRandCode();
-    await tpWrite(code,tpGetLocalData());
     _tpCode=code;
     localStorage.setItem(TP_CODE_KEY,code);
     sessionStorage.setItem(TP_CODE_KEY,code);
+    await tpPushWithDevice();// push with device info
     showSyncConnected(code);
     tpStartPoll();
     showNotif('☁️ Sync enabled! Your code: '+code);
+    tpUpdateDeviceList();
   }catch(e){tpMsg('Error: '+e.message,'#ef4444');}
 }
 
 // ── Connect with existing code ──
 async function connectSyncCode(){
   const code=(document.getElementById('syncCodeInput').value||'').trim().toUpperCase();
-  if(code.length!==6){tpMsg('Enter your 6-letter code','#ef4444');return;}
+  if(code.length<4){tpMsg('Enter your 6-letter code','#ef4444');return;}
   tpMsg('Connecting…');
   try{
     const d=await tpRead(code);
@@ -5901,10 +6025,14 @@ async function connectSyncCode(){
     _tpCode=code;
     localStorage.setItem(TP_CODE_KEY,code);
     sessionStorage.setItem(TP_CODE_KEY,code);
+    // Immediately apply ALL remote data
     tpApplyRemote(d);
+    // Register this device
+    await tpPushWithDevice();
     showSyncConnected(code);
     tpStartPoll();
-    showNotif('☁️ Connected! Schedule synced.');
+    showNotif('☁️ Connected! Everything synced instantly.');
+    tpUpdateDeviceList();
   }catch(e){tpMsg('Error: '+e.message,'#ef4444');}
 }
 
@@ -6098,6 +6226,110 @@ async function removeFriend(code){
       try{const d=await tpRead(code);if(d)tpApplyRemote(d);}catch(e){}
     },1500);
   }
+})();
+</script>
+
+<script>
+// ═══ VERSION + LOGO + ANIMATIONS ═══
+const TP_VERSION = 'v2.0 · Apr 2026';
+
+// ── Set version in editor ──
+(function(){
+  const el=document.getElementById('tpVersionLabel');
+  if(el)el.textContent=TP_VERSION;
+})();
+
+// ── 10 TryPlanning Logo Variants ──
+const TP_LOGOS=[
+  // 1. Minimal monogram
+  `<svg width="SIZE" height="SIZE" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#7c3aed"/><text x="20" y="27" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="18" fill="white">TP</text></svg>`,
+  // 2. Calendar icon
+  `<svg width="SIZE" height="SIZE" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#0ea5e9"/><rect x="7" y="12" width="26" height="20" rx="3" fill="white" opacity=".9"/><rect x="7" y="12" width="26" height="7" rx="3" fill="#0ea5e9"/><rect x="13" y="7" width="3" height="8" rx="1.5" fill="white"/><rect x="24" y="7" width="3" height="8" rx="1.5" fill="white"/><rect x="11" y="23" width="4" height="4" rx="1" fill="#0ea5e9"/><rect x="18" y="23" width="4" height="4" rx="1" fill="#0ea5e9"/><rect x="25" y="23" width="4" height="4" rx="1" fill="#0ea5e9"/></svg>`,
+  // 3. Cloud + checkmark
+  `<svg width="SIZE" height="SIZE" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#10b981"/><ellipse cx="20" cy="19" rx="12" ry="8" fill="white" opacity=".9"/><ellipse cx="13" cy="21" rx="7" ry="6" fill="white" opacity=".9"/><ellipse cx="27" cy="21" rx="7" ry="6" fill="white" opacity=".9"/><polyline points="13,20 18,25 28,15" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
+  // 4. Gradient circle
+  `<svg width="SIZE" height="SIZE" viewBox="0 0 40 40"><defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#ef4444"/></linearGradient></defs><rect width="40" height="40" rx="20" fill="url(#lg1)"/><text x="20" y="26" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="14" fill="white">try</text><text x="20" y="37" text-anchor="middle" font-family="Georgia,serif" font-size="9" fill="rgba(255,255,255,.7)">planning</text></svg>`,
+  // 5. Star + text
+  `<svg width="SIZE" height="SIZE" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#1e1b4b"/><polygon points="20,6 22.9,14.1 31.5,14.1 24.8,19.3 27.3,27.7 20,22.6 12.7,27.7 15.2,19.3 8.5,14.1 17.1,14.1" fill="#f59e0b"/><text x="20" y="37" text-anchor="middle" font-family="system-ui,sans-serif" font-size="7" fill="rgba(255,255,255,.6)">TRYPLANNING</text></svg>`,
+  // 6. Notebook/lines
+  `<svg width="SIZE" height="SIZE" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#f8fafc"/><rect x="7" y="5" width="26" height="30" rx="3" fill="white" stroke="#e2e8f0" stroke-width="1.5"/><rect x="7" y="5" width="7" height="30" rx="3" fill="#6366f1"/><line x1="17" y1="13" x2="30" y2="13" stroke="#e2e8f0" stroke-width="1.5"/><line x1="17" y1="19" x2="30" y2="19" stroke="#e2e8f0" stroke-width="1.5"/><line x1="17" y1="25" x2="30" y2="25" stroke="#e2e8f0" stroke-width="1.5"/><line x1="17" y1="31" x2="27" y2="31" stroke="#e2e8f0" stroke-width="1.5"/></svg>`,
+  // 7. Bold rounded text
+  `<svg width="SIZE" height="SIZE" viewBox="0 0 80 40"><rect width="80" height="40" rx="10" fill="#ec4899"/><text x="40" y="17" text-anchor="middle" font-family="-apple-system,sans-serif" font-weight="900" font-size="13" fill="white">TRY</text><text x="40" y="32" text-anchor="middle" font-family="-apple-system,sans-serif" font-weight="900" font-size="13" fill="rgba(255,255,255,.7)">PLANNING</text></svg>`,
+  // 8. Checkmark minimal
+  `<svg width="SIZE" height="SIZE" viewBox="0 0 40 40"><rect width="40" height="40" rx="12" fill="white" stroke="#7c3aed" stroke-width="2.5"/><polyline points="9,20 16,28 31,12" stroke="#7c3aed" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
+  // 9. Rocket
+  `<svg width="SIZE" height="SIZE" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#0f172a"/><path d="M20 7 C20 7 28 12 28 22 L20 30 L12 22 C12 12 20 7 20 7Z" fill="#818cf8"/><circle cx="20" cy="19" r="3" fill="white"/><path d="M13 24 L10 30 L16 28Z" fill="#f59e0b"/><path d="M27 24 L30 30 L24 28Z" fill="#f59e0b"/><circle cx="20" cy="32" r="2" fill="#f472b6" opacity=".8"/></svg>`,
+  // 10. Wavy underline text
+  `<svg width="SIZE" height="SIZE" viewBox="0 0 70 40"><rect width="70" height="40" rx="10" fill="#f0fdf4"/><text x="35" y="22" text-anchor="middle" font-family="-apple-system,sans-serif" font-weight="700" font-size="13" fill="#166534">TryPlanning</text><path d="M8 30 Q17 26 26 30 Q35 34 44 30 Q53 26 62 30" stroke="#16a34a" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`,
+];
+
+const TP_LOGO_KEY='tp_logo_idx';
+const TP_LOGO_SIZE_KEY='tp_logo_size';
+let _tpLogoIdx=parseInt(localStorage.getItem(TP_LOGO_KEY)||'0');
+let _tpLogoSize=parseInt(localStorage.getItem(TP_LOGO_SIZE_KEY)||'32');
+
+function renderLogo(){
+  const el=document.getElementById('tpLogo');
+  if(!el)return;
+  const svg=TP_LOGOS[_tpLogoIdx]||TP_LOGOS[0];
+  // For logo 7 (wide), use width=64
+  const w=_tpLogoIdx===6||_tpLogoIdx===9?Math.round(_tpLogoSize*2):_tpLogoSize;
+  el.innerHTML=svg.replaceAll('SIZE',String(_tpLogoSize)).replace(/width="80"/,`width="${w}"`).replace(/width="70"/,`width="${w}"`);
+  el.style.animation='logoFloat 5s ease-in-out infinite';
+}
+
+function openLogoPicker(){
+  document.getElementById('logoPickerModal').style.display='flex';
+  document.getElementById('logoSizeSlider').value=_tpLogoSize;
+  buildLogoGrid();
+}
+function closeLogoPicker(){document.getElementById('logoPickerModal').style.display='none';}
+function buildLogoGrid(){
+  const grid=document.getElementById('logoGrid');
+  grid.innerHTML='';
+  TP_LOGOS.forEach((svg,i)=>{
+    const d=document.createElement('div');
+    d.className='tp-logo-opt'+(i===_tpLogoIdx?' selected':'');
+    const w=i===6||i===9?48:24;
+    d.innerHTML=svg.replaceAll('SIZE','24').replace('width="80"',`width="${w}"`).replace('width="70"',`width="${w}"`);
+    d.onclick=()=>{
+      _tpLogoIdx=i;
+      localStorage.setItem(TP_LOGO_KEY,i);
+      grid.querySelectorAll('.tp-logo-opt').forEach((x,j)=>x.classList.toggle('selected',j===i));
+      renderLogo();
+    };
+    grid.appendChild(d);
+  });
+}
+function updateLogoSize(val){
+  _tpLogoSize=parseInt(val);
+  localStorage.setItem(TP_LOGO_SIZE_KEY,_tpLogoSize);
+  renderLogo();
+}
+
+// Init logo
+renderLogo();
+
+// ── Cell click animation enhancement ──
+(function(){
+  const _origBuildTable=window.buildTable;
+  if(!_origBuildTable)return;
+  // Patch cell click to add animation class
+  document.addEventListener('click',e=>{
+    const td=e.target.closest('td.schedule-cell');
+    if(!td)return;
+    const wasDone=td.classList.contains('done');
+    // Add animation after state changes (small delay to let toggle happen)
+    setTimeout(()=>{
+      const isDone=td.classList.contains('done');
+      if(isDone!==wasDone){
+        td.classList.remove('just-done','just-undone');
+        void td.offsetWidth;// reflow
+        td.classList.add(isDone?'just-done':'just-undone');
+        setTimeout(()=>td.classList.remove('just-done','just-undone'),500);
+      }
+    },10);
+  },true);
 })();
 </script>
 
