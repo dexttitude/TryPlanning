@@ -5756,8 +5756,7 @@ async function tpWrite(code,data){
   if(!res.ok)throw new Error('Write failed: '+res.status);
 }
 
-// ── Get current local data ──
-// All localStorage keys to sync (full personalisation)
+// ── Get current local data — syncs EVERYTHING ──
 const TP_SYNC_KEYS=[
   'dv_name','dv_avatar','dv_theme','dv_aes','dv_s','dv_w',
   'dv_n','dv_cn','dv_ft','dv_h','dv_xp','dv_tf','dv_cs',
@@ -5769,7 +5768,15 @@ function tpGetLocalData(){
   try{
     const{tot,don}=countCells();
     const data={updatedAt:Date.now(),streak:getStreak(),pct:tot?Math.round(don/tot*100):0};
+    // Fixed keys
     TP_SYNC_KEYS.forEach(k=>{const v=localStorage.getItem(k);if(v!=null)data[k]=v;});
+    // Dynamic keys: font paint + resize (all aesthetics)
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k&&(k.startsWith('dv_fp2_')||k.startsWith('dv_rs_'))){
+        data[k]=localStorage.getItem(k);
+      }
+    }
     return data;
   }catch(e){return{updatedAt:Date.now(),streak:0,pct:0};}
 }
@@ -5777,25 +5784,35 @@ function tpGetLocalData(){
 // ── Apply remote data — full restore ──
 function tpApplyRemote(d){
   if(!d)return;
-  // Write all synced keys to localStorage
-  TP_SYNC_KEYS.forEach(k=>{if(d[k]!=null)localStorage.setItem(k,d[k]);});
-  // Reload in-memory variables that the app uses
+  // Write all keys to localStorage (fixed + dynamic font/resize keys)
+  Object.keys(d).forEach(k=>{
+    if((k.startsWith('dv_')||k.startsWith('tp_'))&&d[k]!=null){
+      localStorage.setItem(k,d[k]);
+    }
+  });
+  // Reload in-memory state variable (week ticks)
+  try{window.state=JSON.parse(localStorage.getItem('dv_s')||'{}');}catch(e){}
+  // Reload custom schedule structure
   if(d['dv_cs']){
     try{window.customSchedule=JSON.parse(d['dv_cs']);}catch(e){window.customSchedule=null;}
   }
-  if(d['dv_name']&&window.saveName)saveName(d['dv_name']);
-  if(d['dv_avatar']&&window.saveAvatarId)saveAvatarId(d['dv_avatar']);
-  // Re-apply theme + aesthetic (updates CSS vars + classes)
+  // Reload FT and appointments
+  try{window.ftSt=JSON.parse(localStorage.getItem('dv_ft')||'{}');}catch(e){}
+  try{window.apptList=JSON.parse(localStorage.getItem('dv_appt')||'[]');}catch(e){}
+  // Re-apply theme + aesthetic
   if(d['dv_theme']&&window.applyTheme)applyTheme(d['dv_theme']);
   if(d['dv_aes']&&window.applyAesthetic)applyAesthetic(d['dv_aes']);
   // Reload time format
-  if(d['dv_tf']){window._timeFmt=d['dv_tf'];}
+  if(d['dv_tf'])window._timeFmt=d['dv_tf'];
+  // Re-apply font paints + resizes
+  if(window.applyAllFontPaints)applyAllFontPaints();
+  if(window.applyAllResizes)applyAllResizes();
   // Rebuild all UI
   if(window.buildTable)buildTable();
   if(window.buildTodayStrip)buildTodayStrip();
   if(window.updateStats)updateStats();
-  if(window.renderHeader)renderHeader();
-  // Update notes textarea
+  if(window.buildFT)buildFT();
+  // Update notes
   const noteEl=document.getElementById('notesArea');
   if(noteEl&&document.activeElement!==noteEl)noteEl.value=d['dv_n']||'';
   // Update name in header
