@@ -1962,8 +1962,8 @@ td.schedule-cell.just-undone{animation:cellUndo .3s ease;}
     </div>
   </div>
   <div class="header">
-    <!-- TryPlanning Logo (top-left) -->
-    <div id="tpLogo" onclick="openLogoPicker()" title="Change logo" style="position:absolute;top:10px;left:14px;cursor:pointer;z-index:10;user-select:none;"></div>
+    <!-- TryPlanning Logo — centered above title -->
+    <div id="tpLogo" onclick="openLogoPicker()" title="Change logo" style="display:flex;justify-content:center;margin-bottom:8px;cursor:pointer;user-select:none;"></div>
     <h1>
       <div class="avatar-badge" id="avatarBadge" onclick="openCustomise()" title="Edit"></div>
       <span class="title-text"><span class="owner-name" id="ownerName">Loading…</span><span class="sched-suffix" id="schedTypeLabel">'s Schedule</span></span>
@@ -2206,11 +2206,15 @@ td.schedule-cell.just-undone{animation:cellUndo .3s ease;}
       <h3 style="margin:0;font-size:17px;color:var(--text);">TryPlanning Logo</h3>
       <button onclick="closeLogoPicker()" style="border:none;background:none;font-size:22px;cursor:pointer;color:var(--text-muted);">×</button>
     </div>
-    <div style="margin-bottom:14px;">
+    <div style="margin-bottom:12px;">
       <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);">Size</label>
-      <input type="range" id="logoSizeSlider" min="20" max="60" value="32" style="width:100%;margin-top:6px;" oninput="updateLogoSize(this.value)">
+      <input type="range" id="logoSizeSlider" min="24" max="56" value="36" style="width:100%;margin-top:6px;" oninput="updateLogoSize(this.value)">
     </div>
-    <div id="logoGrid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 14px;background:var(--bg);border-radius:10px;border:1px solid var(--card-border);">
+      <span style="font-size:13px;color:var(--text);flex:1;">Hide logo</span>
+      <input type="checkbox" id="logoHideCheck" onchange="toggleLogoHide(this.checked)" style="width:18px;height:18px;cursor:pointer;">
+    </div>
+    <div id="logoGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;max-height:280px;overflow-y:auto;"></div>
     <button onclick="closeLogoPicker()" style="width:100%;padding:10px;border-radius:10px;border:none;background:var(--accent-bg);color:var(--accent);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Done</button>
   </div>
 </div>
@@ -5808,6 +5812,12 @@ if(_origApplyAes2){window.applyAesthetic=function(id){_origApplyAes2(id);applyAl
 const TP_KV_BUCKET = 'FEYtjzp5czsTEfghUkcpij';
 const TP_KV_BASE   = 'https://kvdb.io/' + TP_KV_BUCKET + '/';
 const TP_CODE_KEY  = 'tp_sync_code';
+// Cookie helpers — shared between Safari and PWA dock (unlike localStorage)
+function tpSetCookie(k,v){document.cookie=k+'='+encodeURIComponent(v)+';max-age=31536000;path=/;SameSite=Lax';}
+function tpGetCookie(k){const m=document.cookie.match('(?:^|;)\\s*'+k+'=([^;]+)');return m?decodeURIComponent(m[1]):null;}
+function tpSaveCode(code){localStorage.setItem(TP_CODE_KEY,code);sessionStorage.setItem(TP_CODE_KEY,code);tpSetCookie(TP_CODE_KEY,code);}
+function tpLoadCode(){return tpGetCookie(TP_CODE_KEY)||localStorage.getItem(TP_CODE_KEY)||sessionStorage.getItem(TP_CODE_KEY)||null;}
+function tpClearCode(){localStorage.removeItem(TP_CODE_KEY);sessionStorage.removeItem(TP_CODE_KEY);document.cookie=TP_CODE_KEY+'=;max-age=0;path=/';}
 let _tpCode = null, _tpPollTimer = null;
 
 // ── Generate a random 6-char sync code ──
@@ -6038,8 +6048,7 @@ async function generateSyncCode(){
   try{
     const code=tpRandCode();
     _tpCode=code;
-    localStorage.setItem(TP_CODE_KEY,code);
-    sessionStorage.setItem(TP_CODE_KEY,code);
+    tpSaveCode(code);
     await tpPushWithDevice();// push with device info
     showSyncConnected(code);
     tpStartPoll();
@@ -6074,7 +6083,7 @@ function disconnectSync(){
   if(!confirm('Stop syncing? Your local data stays.'))return;
   if(_tpPollTimer)clearInterval(_tpPollTimer);
   _tpCode=null;
-  localStorage.removeItem(TP_CODE_KEY);
+  tpClearCode();
   showSyncDisconnected();
 }
 function copySyncCode(){
@@ -6084,7 +6093,7 @@ function copySyncCode(){
 // ── Sync panel UI ──
 function openSyncPanel(){
   document.getElementById('syncPanel').style.display='flex';
-  if(_tpCode){showSyncConnected(_tpCode);}else{showSyncDisconnected();}
+  if(_tpCode){showSyncConnected(_tpCode);tpUpdateDeviceList();}else{showSyncDisconnected();}
 }
 function closeSyncPanel(){document.getElementById('syncPanel').style.display='none';}
 function showSyncConnected(code){
@@ -6249,12 +6258,11 @@ async function removeFriend(code){
 // ── Auto-reconnect on load ──
 (function(){
   // Try localStorage first, then sessionStorage as backup
-  const code=localStorage.getItem(TP_CODE_KEY)||sessionStorage.getItem(TP_CODE_KEY);
+  const code=tpLoadCode();
   if(code){
     _tpCode=code;
     // Always persist in both stores
-    localStorage.setItem(TP_CODE_KEY,code);
-    sessionStorage.setItem(TP_CODE_KEY,code);
+    tpSaveCode(code);
     tpStartPoll();
     setTimeout(async()=>{
       try{const d=await tpRead(code);if(d)tpApplyRemote(d);}catch(e){}
@@ -6268,64 +6276,76 @@ async function removeFriend(code){
 const TP_VERSION = 'v2.0 · Apr 2026';
 
 // ── Set version in editor ──
-(function(){
-  const el=document.getElementById('tpVersionLabel');
-  if(el)el.textContent=TP_VERSION;
-})();
+// Version label set in renderHeader or directly
+document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById('tpVersionLabel');if(el)el.textContent=TP_VERSION;});setTimeout(()=>{const el=document.getElementById('tpVersionLabel');if(el)el.textContent=TP_VERSION;},500);
 
 // ── 10 TryPlanning Logo Variants ──
+// 10 Creative TryPlanning logos — all feature the name prominently
+// W=wide viewBox (160x50), S=square (40x40), each uses SIZE for height
 const TP_LOGOS=[
-  // 1. Minimal monogram
-  `<svg width="SIZE" height="SIZE" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#7c3aed"/><text x="20" y="27" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="18" fill="white">TP</text></svg>`,
-  // 2. Calendar icon
-  `<svg width="SIZE" height="SIZE" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#0ea5e9"/><rect x="7" y="12" width="26" height="20" rx="3" fill="white" opacity=".9"/><rect x="7" y="12" width="26" height="7" rx="3" fill="#0ea5e9"/><rect x="13" y="7" width="3" height="8" rx="1.5" fill="white"/><rect x="24" y="7" width="3" height="8" rx="1.5" fill="white"/><rect x="11" y="23" width="4" height="4" rx="1" fill="#0ea5e9"/><rect x="18" y="23" width="4" height="4" rx="1" fill="#0ea5e9"/><rect x="25" y="23" width="4" height="4" rx="1" fill="#0ea5e9"/></svg>`,
-  // 3. Cloud + checkmark
-  `<svg width="SIZE" height="SIZE" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#10b981"/><ellipse cx="20" cy="19" rx="12" ry="8" fill="white" opacity=".9"/><ellipse cx="13" cy="21" rx="7" ry="6" fill="white" opacity=".9"/><ellipse cx="27" cy="21" rx="7" ry="6" fill="white" opacity=".9"/><polyline points="13,20 18,25 28,15" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
-  // 4. Gradient circle
-  `<svg width="SIZE" height="SIZE" viewBox="0 0 40 40"><defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#ef4444"/></linearGradient></defs><rect width="40" height="40" rx="20" fill="url(#lg1)"/><text x="20" y="26" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="14" fill="white">try</text><text x="20" y="37" text-anchor="middle" font-family="Georgia,serif" font-size="9" fill="rgba(255,255,255,.7)">planning</text></svg>`,
-  // 5. Star + text
-  `<svg width="SIZE" height="SIZE" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#1e1b4b"/><polygon points="20,6 22.9,14.1 31.5,14.1 24.8,19.3 27.3,27.7 20,22.6 12.7,27.7 15.2,19.3 8.5,14.1 17.1,14.1" fill="#f59e0b"/><text x="20" y="37" text-anchor="middle" font-family="system-ui,sans-serif" font-size="7" fill="rgba(255,255,255,.6)">TRYPLANNING</text></svg>`,
-  // 6. Notebook/lines
-  `<svg width="SIZE" height="SIZE" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#f8fafc"/><rect x="7" y="5" width="26" height="30" rx="3" fill="white" stroke="#e2e8f0" stroke-width="1.5"/><rect x="7" y="5" width="7" height="30" rx="3" fill="#6366f1"/><line x1="17" y1="13" x2="30" y2="13" stroke="#e2e8f0" stroke-width="1.5"/><line x1="17" y1="19" x2="30" y2="19" stroke="#e2e8f0" stroke-width="1.5"/><line x1="17" y1="25" x2="30" y2="25" stroke="#e2e8f0" stroke-width="1.5"/><line x1="17" y1="31" x2="27" y2="31" stroke="#e2e8f0" stroke-width="1.5"/></svg>`,
-  // 7. Bold rounded text
-  `<svg width="SIZE" height="SIZE" viewBox="0 0 80 40"><rect width="80" height="40" rx="10" fill="#ec4899"/><text x="40" y="17" text-anchor="middle" font-family="-apple-system,sans-serif" font-weight="900" font-size="13" fill="white">TRY</text><text x="40" y="32" text-anchor="middle" font-family="-apple-system,sans-serif" font-weight="900" font-size="13" fill="rgba(255,255,255,.7)">PLANNING</text></svg>`,
-  // 8. Checkmark minimal
-  `<svg width="SIZE" height="SIZE" viewBox="0 0 40 40"><rect width="40" height="40" rx="12" fill="white" stroke="#7c3aed" stroke-width="2.5"/><polyline points="9,20 16,28 31,12" stroke="#7c3aed" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
-  // 9. Rocket
-  `<svg width="SIZE" height="SIZE" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#0f172a"/><path d="M20 7 C20 7 28 12 28 22 L20 30 L12 22 C12 12 20 7 20 7Z" fill="#818cf8"/><circle cx="20" cy="19" r="3" fill="white"/><path d="M13 24 L10 30 L16 28Z" fill="#f59e0b"/><path d="M27 24 L30 30 L24 28Z" fill="#f59e0b"/><circle cx="20" cy="32" r="2" fill="#f472b6" opacity=".8"/></svg>`,
-  // 10. Wavy underline text
-  `<svg width="SIZE" height="SIZE" viewBox="0 0 70 40"><rect width="70" height="40" rx="10" fill="#f0fdf4"/><text x="35" y="22" text-anchor="middle" font-family="-apple-system,sans-serif" font-weight="700" font-size="13" fill="#166534">TryPlanning</text><path d="M8 30 Q17 26 26 30 Q35 34 44 30 Q53 26 62 30" stroke="#16a34a" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`,
+  // 1. Pill wordmark — clean modern
+  `<svg height="SIZE" viewBox="0 0 160 40"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#4f46e5"/></linearGradient></defs><rect width="160" height="40" rx="20" fill="url(#g1)"/><text x="80" y="26" text-anchor="middle" font-family="-apple-system,'SF Pro Display',sans-serif" font-weight="700" font-size="17" letter-spacing="-0.3" fill="white">TryPlanning</text></svg>`,
+  // 2. Badge icon + name
+  `<svg height="SIZE" viewBox="0 0 160 40"><rect width="160" height="40" rx="10" fill="#0f172a"/><rect x="4" y="4" width="32" height="32" rx="8" fill="#7c3aed"/><text x="20" y="25" text-anchor="middle" font-family="system-ui" font-weight="900" font-size="15" fill="white">TP</text><text x="96" y="23" text-anchor="middle" font-family="-apple-system,sans-serif" font-weight="600" font-size="15" fill="white">TryPlanning</text><text x="96" y="34" text-anchor="middle" font-family="system-ui" font-size="9" fill="rgba(255,255,255,.4)" letter-spacing="2">SCHEDULE</text></svg>`,
+  // 3. Gradient name + underline accent
+  `<svg height="SIZE" viewBox="0 0 160 40"><defs><linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#ef4444"/></linearGradient></defs><text x="8" y="26" font-family="Georgia,'Times New Roman',serif" font-style="italic" font-weight="700" font-size="22" fill="url(#g3)">TryPlanning</text><line x1="8" y1="32" x2="152" y2="32" stroke="url(#g3)" stroke-width="2.5" stroke-linecap="round"/></svg>`,
+  // 4. Rounded square + elegant name
+  `<svg height="SIZE" viewBox="0 0 160 40"><rect width="160" height="40" rx="12" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/><rect x="6" y="6" width="28" height="28" rx="7" fill="#6366f1"/><text x="20" y="24" text-anchor="middle" font-family="system-ui" font-weight="800" font-size="12" fill="white">try</text><text x="90" y="27" text-anchor="middle" font-family="-apple-system,sans-serif" font-weight="700" font-size="18" fill="#1e1b4b" letter-spacing="-0.5">TryPlanning</text></svg>`,
+  // 5. Dark glass card
+  `<svg height="SIZE" viewBox="0 0 160 40"><defs><linearGradient id="g5" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(255,255,255,.15)"/><stop offset="100%" stop-color="rgba(255,255,255,.05)"/></linearGradient></defs><rect width="160" height="40" rx="14" fill="#1e1b4b"/><rect width="160" height="40" rx="14" fill="url(#g5)"/><rect x="0.75" y="0.75" width="158.5" height="38.5" rx="13.25" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1.5"/><text x="80" y="22" text-anchor="middle" font-family="-apple-system,sans-serif" font-weight="700" font-size="14" fill="white" letter-spacing=".5">TRYPLANNING</text><text x="80" y="34" text-anchor="middle" font-family="system-ui" font-size="8" fill="rgba(255,255,255,.4)" letter-spacing="3">SCHEDULE</text></svg>`,
+  // 6. Neon glow
+  `<svg height="SIZE" viewBox="0 0 160 40"><rect width="160" height="40" rx="10" fill="#020617"/><text x="80" y="27" text-anchor="middle" font-family="-apple-system,'SF Pro',sans-serif" font-weight="800" font-size="19" fill="#22d3ee" filter="url(#neon)">TryPlanning</text><defs><filter id="neon"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><rect x="8" y="35" width="144" height="1.5" rx="1" fill="#22d3ee" opacity=".4"/></svg>`,
+  // 7. Pastel bubble
+  `<svg height="SIZE" viewBox="0 0 160 40"><rect width="160" height="40" rx="20" fill="#fdf2f8"/><rect x="5" y="5" width="30" height="30" rx="15" fill="#ec4899"/><text x="20" y="25" text-anchor="middle" font-family="system-ui" font-weight="900" font-size="13" fill="white">✦</text><text x="97" y="27" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-weight="700" font-size="18" fill="#9d174d">TryPlanning</text></svg>`,
+  // 8. Minimal line art
+  `<svg height="SIZE" viewBox="0 0 160 40"><text x="8" y="27" font-family="-apple-system,'SF Pro Display',system-ui,sans-serif" font-weight="300" font-size="19" fill="#1a1a2e" letter-spacing="-0.5">Try<tspan font-weight="800">Planning</tspan></text><line x1="8" y1="33" x2="60" y2="33" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round"/><circle cx="155" cy="20" r="8" fill="none" stroke="#7c3aed" stroke-width="1.5"/><polyline points="151,20 154,23 159,17" stroke="#7c3aed" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  // 9. Cloud + name (cloudy theme)
+  `<svg height="SIZE" viewBox="0 0 160 40"><defs><linearGradient id="g9" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#bfdbfe"/><stop offset="100%" stop-color="#dbeafe"/></linearGradient></defs><rect width="160" height="40" rx="12" fill="url(#g9)"/><ellipse cx="22" cy="20" rx="13" ry="8" fill="white" opacity=".9"/><ellipse cx="13" cy="22" rx="7" ry="6" fill="white" opacity=".9"/><ellipse cx="31" cy="22" rx="7" ry="6" fill="white" opacity=".9"/><text x="100" y="26" text-anchor="middle" font-family="-apple-system,sans-serif" font-weight="700" font-size="16" fill="#1d4ed8">TryPlanning</text></svg>`,
+  // 10. Space + name
+  `<svg height="SIZE" viewBox="0 0 160 40"><rect width="160" height="40" rx="12" fill="#0c0a1e"/><circle cx="12" cy="10" r="1.5" fill="white" opacity=".7"/><circle cx="25" cy="6" r="1" fill="white" opacity=".5"/><circle cx="8" cy="28" r="1" fill="white" opacity=".6"/><circle cx="18" cy="18" r="2" fill="white" opacity=".4"/><path d="M28 20 C28 14 34 10 34 10 C34 10 40 14 40 20 L34 26Z" fill="#818cf8"/><circle cx="34" cy="18" r="2.5" fill="white"/><text x="105" y="26" text-anchor="middle" font-family="-apple-system,'SF Pro',sans-serif" font-weight="700" font-size="15" fill="white" letter-spacing=".3">TryPlanning</text></svg>`,
 ];
 
 const TP_LOGO_KEY='tp_logo_idx';
 const TP_LOGO_SIZE_KEY='tp_logo_size';
+const TP_LOGO_HIDE_KEY='tp_logo_hide';
 let _tpLogoIdx=parseInt(localStorage.getItem(TP_LOGO_KEY)||'0');
-let _tpLogoSize=parseInt(localStorage.getItem(TP_LOGO_SIZE_KEY)||'32');
+let _tpLogoSize=parseInt(localStorage.getItem(TP_LOGO_SIZE_KEY)||'36');
+let _tpLogoHidden=localStorage.getItem(TP_LOGO_HIDE_KEY)==='1';
 
 function renderLogo(){
   const el=document.getElementById('tpLogo');
   if(!el)return;
+  if(_tpLogoHidden){el.innerHTML='';el.style.display='none';return;}
+  el.style.display='block';
   const svg=TP_LOGOS[_tpLogoIdx]||TP_LOGOS[0];
-  // For logo 7 (wide), use width=64
-  const w=_tpLogoIdx===6||_tpLogoIdx===9?Math.round(_tpLogoSize*2):_tpLogoSize;
-  el.innerHTML=svg.replaceAll('SIZE',String(_tpLogoSize)).replace(/width="80"/,`width="${w}"`).replace(/width="70"/,`width="${w}"`);
+  // All logos are wide (160 viewBox) — scale height, auto width
+  const h=_tpLogoSize;
+  el.innerHTML=svg.replace(/height="SIZE"/,`height="${h}"`);
   el.style.animation='logoFloat 5s ease-in-out infinite';
 }
 
 function openLogoPicker(){
   document.getElementById('logoPickerModal').style.display='flex';
   document.getElementById('logoSizeSlider').value=_tpLogoSize;
+  const hideChk=document.getElementById('logoHideCheck');
+  if(hideChk)hideChk.checked=_tpLogoHidden;
   buildLogoGrid();
 }
 function closeLogoPicker(){document.getElementById('logoPickerModal').style.display='none';}
+function toggleLogoHide(val){
+  _tpLogoHidden=val;
+  localStorage.setItem(TP_LOGO_HIDE_KEY,val?'1':'0');
+  renderLogo();
+}
 function buildLogoGrid(){
   const grid=document.getElementById('logoGrid');
   grid.innerHTML='';
   TP_LOGOS.forEach((svg,i)=>{
     const d=document.createElement('div');
     d.className='tp-logo-opt'+(i===_tpLogoIdx?' selected':'');
-    const w=i===6||i===9?48:24;
-    d.innerHTML=svg.replaceAll('SIZE','24').replace('width="80"',`width="${w}"`).replace('width="70"',`width="${w}"`);
+    d.style.cssText='padding:6px;border-radius:8px;';
+    // Preview at height 24
+    d.innerHTML=svg.replace('height="SIZE"','height="22"');
     d.onclick=()=>{
       _tpLogoIdx=i;
       localStorage.setItem(TP_LOGO_KEY,i);
