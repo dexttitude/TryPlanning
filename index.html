@@ -2564,6 +2564,8 @@ function archiveWeek(wk,st){
   h.unshift({wn:wk,label:weekLabelFor(wk),tot,don,pct,days:dayData});
   if(h.length>16)h.length=16;
   localStorage.setItem(K.hist,JSON.stringify(h));
+  // Immediately push updated history to cloud so sync never overwrites it
+  setTimeout(()=>{try{tpPush();}catch(e){}},200);
 }
 function saveSched(st){localStorage.setItem(K.sched,JSON.stringify(st));}
 function loadTileMeta(){try{return JSON.parse(localStorage.getItem('dv_tile_meta')||'{}')}catch(e){return{}}}
@@ -5873,9 +5875,24 @@ function tpGetLocalData(){
 function tpApplyRemote(d){
   if(!d)return;
   // Write all keys to localStorage (fixed + dynamic font/resize keys)
+  // BUT merge dv_h (history) instead of overwriting — avoids losing a freshly-archived week
   Object.keys(d).forEach(k=>{
     if((k.startsWith('dv_')||k.startsWith('tp_'))&&d[k]!=null){
-      localStorage.setItem(k,d[k]);
+      if(k==='dv_h'){
+        // Merge: keep all unique week entries from both local and remote
+        try{
+          const remote=JSON.parse(d[k]||'[]');
+          const local=JSON.parse(localStorage.getItem('dv_h')||'[]');
+          const merged=[...local];
+          remote.forEach(rw=>{if(!merged.find(lw=>lw.wn===rw.wn))merged.push(rw);});
+          // Re-sort newest first and cap at 16 weeks
+          merged.sort((a,b)=>(b.wn||'').localeCompare(a.wn||''));
+          if(merged.length>16)merged.length=16;
+          localStorage.setItem('dv_h',JSON.stringify(merged));
+        }catch(e){localStorage.setItem(k,d[k]);}
+      }else{
+        localStorage.setItem(k,d[k]);
+      }
     }
   });
   // Reload in-memory state variable (week ticks)
