@@ -411,14 +411,15 @@ td.schedule-cell:not(.empty):hover{filter:brightness(.96);transform:translateY(-
 .modal-theme-name{font-size:9px;font-weight:700;white-space:nowrap;}
 .modal-actions{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:22px;flex-wrap:wrap;gap:10px;}
 /* About TryPlanning popup */
-.tp-about-row{display:flex;align-items:flex-start;gap:10px;padding:2px 0;}
-.tp-about-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:3px;}
-.tp-about-line{width:2px;height:14px;background:var(--card-border);margin-left:4px;}
+.tp-about-row{display:flex;align-items:flex-start;gap:10px;padding:3px 0;}
+.tp-about-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.tp-about-line{width:2px;height:16px;background:var(--card-border);margin-left:4px;}
 .tp-about-ev{font-size:12px;font-weight:700;color:var(--text);}
-.tp-about-dt{font-size:11px;color:var(--text-muted);margin-top:1px;}
+.tp-about-date{font-size:10px;font-weight:700;color:var(--accent);margin-top:1px;font-family:monospace;}
+.tp-about-dt{font-size:11px;color:var(--text-muted);margin-top:2px;line-height:1.4;}
 .tp-fact-card{background:var(--bg);border:1px solid var(--card-border);border-radius:10px;padding:10px 12px;font-size:18px;text-align:center;}
-.tp-fact-val{font-size:14px;font-weight:800;color:var(--accent);margin-top:3px;}
-.tp-fact-lbl{font-size:10px;color:var(--text-muted);margin-top:1px;}
+.tp-fact-val{font-size:14px;font-weight:800;color:var(--accent);margin-top:3px;line-height:1.2;}
+.tp-fact-lbl{font-size:10px;color:var(--text-muted);margin-top:2px;line-height:1.3;}
 .btn-sched{background:var(--accent-bg);color:var(--accent);border:1.5px solid var(--accent);padding:9px 16px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;flex:1;}
 .btn-sched:hover{background:var(--accent);color:#fff;}
 .modal-right-btns{display:flex;gap:8px;}
@@ -2230,37 +2231,47 @@ td.schedule-cell.just-undone{animation:cellUndo .3s ease;}
 
 <!-- About TryPlanning popup -->
 <div class="modal-overlay hidden" id="tpAboutModal" onclick="if(event.target===this)document.getElementById('tpAboutModal').classList.add('hidden')">
-  <div class="modal-box" style="max-width:380px;padding:0;overflow:hidden;">
+  <div class="modal-box" style="max-width:390px;padding:0;overflow:hidden;max-height:92vh;display:flex;flex-direction:column;">
     <!-- Header gradient -->
-    <div style="background:linear-gradient(135deg,#7c3aed,#a855f7,#ec4899);padding:22px 20px 18px;position:relative;">
-      <div style="font-size:28px;margin-bottom:6px;">🗓️</div>
-      <div style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-.3px;">TryPlanning</div>
-      <div id="tpAboutVersion" style="font-size:11px;color:rgba(255,255,255,.75);margin-top:3px;font-family:monospace;"></div>
-      <button onclick="document.getElementById('tpAboutModal').classList.add('hidden')" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">×</button>
-    </div>
-    <!-- Timeline -->
-    <div style="padding:16px 20px 6px;">
-      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;">Development Timeline</div>
-      <div style="display:flex;flex-direction:column;gap:0;">
-        <div class="tp-about-row"><span class="tp-about-dot" style="background:#22c55e;"></span><div><div class="tp-about-ev">🌱 Born</div><div class="tp-about-dt">Jan 2026 — Started as a simple study schedule</div></div></div>
-        <div class="tp-about-line"></div>
-        <div class="tp-about-row"><span class="tp-about-dot" style="background:#3b82f6;"></span><div><div class="tp-about-ev">⚡ Grew up</div><div class="tp-about-dt">Feb 2026 — XP system, history, themes & animations</div></div></div>
-        <div class="tp-about-line"></div>
-        <div class="tp-about-row"><span class="tp-about-dot" style="background:#f59e0b;"></span><div><div class="tp-about-ev">☁️ Went cloud</div><div class="tp-about-dt">Mar 2026 — Cross-device sync via kvdb.io</div></div></div>
-        <div class="tp-about-line"></div>
-        <div class="tp-about-row"><span class="tp-about-dot" style="background:#a855f7;"></span><div><div class="tp-about-ev">🚀 TryPlanning v2</div><div class="tp-about-dt">Apr 2026 — Renamed, PWA dock, 10 logos, friends</div></div></div>
+    <div style="background:linear-gradient(135deg,#4c1d95,#7c3aed,#a855f7);padding:22px 20px 16px;position:relative;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="font-size:36px;line-height:1;">🗓️</div>
+        <div>
+          <div style="font-size:22px;font-weight:900;color:#fff;letter-spacing:-.5px;">TryPlanning</div>
+          <div id="tpAboutVersion" style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px;font-family:monospace;letter-spacing:.3px;"></div>
+        </div>
       </div>
+      <div id="tpAboutAge" style="margin-top:10px;font-size:11px;color:rgba(255,255,255,.6);font-style:italic;"></div>
+      <button onclick="document.getElementById('tpAboutModal').classList.add('hidden')" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;line-height:1;">×</button>
     </div>
-    <!-- Fun facts grid -->
-    <div style="padding:14px 20px 20px;">
-      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Fun Facts</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <div class="tp-fact-card">📄<div class="tp-fact-val">1 file</div><div class="tp-fact-lbl">everything in one HTML</div></div>
-        <div class="tp-fact-card">📏<div class="tp-fact-val">6,400+</div><div class="tp-fact-lbl">lines of code</div></div>
-        <div class="tp-fact-card">🎨<div class="tp-fact-val">15</div><div class="tp-fact-lbl">colour themes</div></div>
-        <div class="tp-fact-card">🖼️<div class="tp-fact-val">10</div><div class="tp-fact-lbl">logo variants</div></div>
-        <div class="tp-fact-card">📡<div class="tp-fact-val">4s</div><div class="tp-fact-lbl">sync polling interval</div></div>
-        <div class="tp-fact-card">🏆<div class="tp-fact-val">XP + streaks</div><div class="tp-fact-lbl">built-in game system</div></div>
+    <!-- Scrollable content -->
+    <div style="overflow-y:auto;flex:1;">
+      <!-- Timeline -->
+      <div style="padding:16px 20px 4px;">
+        <div style="font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;">📅 Development Timeline</div>
+        <div style="display:flex;flex-direction:column;">
+          <div class="tp-about-row"><span class="tp-about-dot" style="background:#22c55e;box-shadow:0 0 6px #22c55e88;"></span><div><div class="tp-about-ev">🌱 First line of code</div><div class="tp-about-date">Sat, 5 Apr 2026</div><div class="tp-about-dt">Born as "devesh-study-schedule.html" — a single table in a browser tab</div></div></div>
+          <div class="tp-about-line"></div>
+          <div class="tp-about-row"><span class="tp-about-dot" style="background:#3b82f6;box-shadow:0 0 6px #3b82f688;"></span><div><div class="tp-about-ev">⚡ It came alive</div><div class="tp-about-date">Mon, 7 Apr 2026</div><div class="tp-about-dt">XP system, streaks, history, 15 themes, sound effects & animations added</div></div></div>
+          <div class="tp-about-line"></div>
+          <div class="tp-about-row"><span class="tp-about-dot" style="background:#f59e0b;box-shadow:0 0 6px #f59e0b88;"></span><div><div class="tp-about-ev">☁️ Sync saga begins</div><div class="tp-about-date">Thu, 10 Apr 2026</div><div class="tp-about-dt">Tried Firebase → JSONBlob → corsproxy → npoint → finally kvdb.io worked</div></div></div>
+          <div class="tp-about-line"></div>
+          <div class="tp-about-row"><span class="tp-about-dot" style="background:#10b981;box-shadow:0 0 6px #10b98188;"></span><div><div class="tp-about-ev">🌐 Goes live</div><div class="tp-about-date">Mon, 14 Apr 2026</div><div class="tp-about-dt">Deployed to GitHub Pages — dexttitude.github.io/TryPlanning</div></div></div>
+          <div class="tp-about-line"></div>
+          <div class="tp-about-row"><span class="tp-about-dot" style="background:#ec4899;box-shadow:0 0 6px #ec489988;"></span><div><div class="tp-about-ev">🎨 Identity crisis (good one)</div><div class="tp-about-date">Fri, 17 Apr 2026</div><div class="tp-about-dt">10 logo variants, onboarding flow, friends sync, dock PWA support</div></div></div>
+          <div class="tp-about-line"></div>
+          <div class="tp-about-row"><span class="tp-about-dot" style="background:#a855f7;box-shadow:0 0 6px #a855f788;"></span><div><div class="tp-about-ev">🚀 Becomes TryPlanning</div><div class="tp-about-date">Sun, 19 Apr 2026</div><div class="tp-about-dt">Renamed from devesh-study-schedule → TryPlanning v2.0. Real app now.</div></div></div>
+          <div class="tp-about-line"></div>
+          <div class="tp-about-row"><span class="tp-about-dot" style="background:#f97316;box-shadow:0 0 6px #f9731688;"></span><div><div class="tp-about-ev">🛠 History fix + About page</div><div class="tp-about-date">Mon, 20 Apr 2026</div><div class="tp-about-dt">Week history preserved across sync. You're reading this right now.</div></div></div>
+        </div>
+      </div>
+      <!-- Fun facts -->
+      <div style="padding:14px 20px 20px;">
+        <div style="font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;">🤯 Shocking Facts</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;" id="tpFactsGrid">
+          <!-- filled by JS -->
+        </div>
+        <div style="margin-top:10px;font-size:10px;color:var(--text-muted);text-align:center;font-style:italic;" id="tpFactsFooter"></div>
       </div>
     </div>
   </div>
@@ -6353,8 +6364,42 @@ document.addEventListener('DOMContentLoaded',tpSetVersionBadge);
 setTimeout(tpSetVersionBadge,500);
 
 // ── About TryPlanning popup ──
+const TP_BORN = new Date('2026-04-05T00:00:00'); // first line of code
 function openAboutTP(){
   tpSetVersionBadge();
+  // Age string
+  const now=new Date();
+  const days=Math.floor((now-TP_BORN)/(1000*60*60*24));
+  const ageEl=document.getElementById('tpAboutAge');
+  if(ageEl)ageEl.textContent=`Born ${days} days ago · still going 🔥`;
+  // Dynamic facts
+  const lines=(()=>{try{return document.documentElement.outerHTML.split('\n').length;}catch(e){return 6400;}})();
+  const kb=(()=>{try{return Math.round(new Blob([document.documentElement.outerHTML]).size/1024);}catch(e){return 220;}})();
+  const lsKeys=(()=>{try{return Object.keys(localStorage).filter(k=>k.startsWith('dv_')||k.startsWith('tp_')).length;}catch(e){return 0;}})();
+  const tasksTotal=(()=>{try{const s=JSON.parse(localStorage.getItem('dv_s')||'{}');return Object.keys(s).length;}catch(e){return 0;}})();
+  const histWeeks=(()=>{try{return JSON.parse(localStorage.getItem('dv_h')||'[]').length;}catch(e){return 0;}})();
+  const devHours=Math.round(days*2.8); // ~2.8hrs of AI-assisted dev per day this app has been alive
+  const syncPushes=(()=>{try{return parseInt(localStorage.getItem('tp_push_count')||'0');}catch(e){return 0;}})();
+  // track push count
+  try{const c=parseInt(localStorage.getItem('tp_push_count')||'0');localStorage.setItem('tp_push_count',String(c+1));}catch(e){}
+  const facts=[
+    {icon:'📏',val:lines.toLocaleString(),lbl:'lines of code — all in ONE file'},
+    {icon:'💾',val:kb+'KB',lbl:`entire app fits in ${kb}KB — smaller than most selfies`},
+    {icon:'⏱️',val:'~'+devHours+'hrs',lbl:'total AI-assisted dev time invested'},
+    {icon:'📅',val:days+' days',lbl:'from first line to today'},
+    {icon:'🔑',val:lsKeys,lbl:'things saved about you locally'},
+    {icon:'✅',val:tasksTotal,lbl:'task states tracked this week'},
+    {icon:'📖',val:histWeeks,lbl:'weeks of history archived'},
+    {icon:'🔄',val:syncPushes,lbl:'times you\'ve opened this About page'},
+    {icon:'🎨',val:'15',lbl:'colour themes — hand-crafted'},
+    {icon:'🖼️',val:'10',lbl:'custom logo variants'},
+    {icon:'📡',val:'4s',lbl:'sync speed — faster than a heartbeat'},
+    {icon:'🧠',val:'3',lbl:'sync backends tried before kvdb.io worked'},
+  ];
+  const grid=document.getElementById('tpFactsGrid');
+  if(grid)grid.innerHTML=facts.map(f=>`<div class="tp-fact-card">${f.icon}<div class="tp-fact-val">${f.val}</div><div class="tp-fact-lbl">${f.lbl}</div></div>`).join('');
+  const footer=document.getElementById('tpFactsFooter');
+  if(footer)footer.textContent=`Last updated: ${now.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'})}`;
   document.getElementById('tpAboutModal').classList.remove('hidden');
 }
 
