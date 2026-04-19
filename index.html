@@ -410,6 +410,15 @@ td.schedule-cell:not(.empty):hover{filter:brightness(.96);transform:translateY(-
 .modal-theme-dot{width:20px;height:20px;border-radius:50%;margin:0 auto 4px;}
 .modal-theme-name{font-size:9px;font-weight:700;white-space:nowrap;}
 .modal-actions{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:22px;flex-wrap:wrap;gap:10px;}
+/* About TryPlanning popup */
+.tp-about-row{display:flex;align-items:flex-start;gap:10px;padding:2px 0;}
+.tp-about-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:3px;}
+.tp-about-line{width:2px;height:14px;background:var(--card-border);margin-left:4px;}
+.tp-about-ev{font-size:12px;font-weight:700;color:var(--text);}
+.tp-about-dt{font-size:11px;color:var(--text-muted);margin-top:1px;}
+.tp-fact-card{background:var(--bg);border:1px solid var(--card-border);border-radius:10px;padding:10px 12px;font-size:18px;text-align:center;}
+.tp-fact-val{font-size:14px;font-weight:800;color:var(--accent);margin-top:3px;}
+.tp-fact-lbl{font-size:10px;color:var(--text-muted);margin-top:1px;}
 .btn-sched{background:var(--accent-bg);color:var(--accent);border:1.5px solid var(--accent);padding:9px 16px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;flex:1;}
 .btn-sched:hover{background:var(--accent);color:#fff;}
 .modal-right-btns{display:flex;gap:8px;}
@@ -2219,10 +2228,52 @@ td.schedule-cell.just-undone{animation:cellUndo .3s ease;}
   </div>
 </div>
 
+<!-- About TryPlanning popup -->
+<div class="modal-overlay hidden" id="tpAboutModal" onclick="if(event.target===this)document.getElementById('tpAboutModal').classList.add('hidden')">
+  <div class="modal-box" style="max-width:380px;padding:0;overflow:hidden;">
+    <!-- Header gradient -->
+    <div style="background:linear-gradient(135deg,#7c3aed,#a855f7,#ec4899);padding:22px 20px 18px;position:relative;">
+      <div style="font-size:28px;margin-bottom:6px;">🗓️</div>
+      <div style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-.3px;">TryPlanning</div>
+      <div id="tpAboutVersion" style="font-size:11px;color:rgba(255,255,255,.75);margin-top:3px;font-family:monospace;"></div>
+      <button onclick="document.getElementById('tpAboutModal').classList.add('hidden')" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">×</button>
+    </div>
+    <!-- Timeline -->
+    <div style="padding:16px 20px 6px;">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;">Development Timeline</div>
+      <div style="display:flex;flex-direction:column;gap:0;">
+        <div class="tp-about-row"><span class="tp-about-dot" style="background:#22c55e;"></span><div><div class="tp-about-ev">🌱 Born</div><div class="tp-about-dt">Jan 2026 — Started as a simple study schedule</div></div></div>
+        <div class="tp-about-line"></div>
+        <div class="tp-about-row"><span class="tp-about-dot" style="background:#3b82f6;"></span><div><div class="tp-about-ev">⚡ Grew up</div><div class="tp-about-dt">Feb 2026 — XP system, history, themes & animations</div></div></div>
+        <div class="tp-about-line"></div>
+        <div class="tp-about-row"><span class="tp-about-dot" style="background:#f59e0b;"></span><div><div class="tp-about-ev">☁️ Went cloud</div><div class="tp-about-dt">Mar 2026 — Cross-device sync via kvdb.io</div></div></div>
+        <div class="tp-about-line"></div>
+        <div class="tp-about-row"><span class="tp-about-dot" style="background:#a855f7;"></span><div><div class="tp-about-ev">🚀 TryPlanning v2</div><div class="tp-about-dt">Apr 2026 — Renamed, PWA dock, 10 logos, friends</div></div></div>
+      </div>
+    </div>
+    <!-- Fun facts grid -->
+    <div style="padding:14px 20px 20px;">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Fun Facts</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="tp-fact-card">📄<div class="tp-fact-val">1 file</div><div class="tp-fact-lbl">everything in one HTML</div></div>
+        <div class="tp-fact-card">📏<div class="tp-fact-val">6,400+</div><div class="tp-fact-lbl">lines of code</div></div>
+        <div class="tp-fact-card">🎨<div class="tp-fact-val">15</div><div class="tp-fact-lbl">colour themes</div></div>
+        <div class="tp-fact-card">🖼️<div class="tp-fact-val">10</div><div class="tp-fact-lbl">logo variants</div></div>
+        <div class="tp-fact-card">📡<div class="tp-fact-val">4s</div><div class="tp-fact-lbl">sync polling interval</div></div>
+        <div class="tp-fact-card">🏆<div class="tp-fact-val">XP + streaks</div><div class="tp-fact-lbl">built-in game system</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Customise / Edit modal -->
 <div class="modal-overlay hidden" id="customiseModal">
   <div class="modal-box modal-box-lg">
-    <h3>⚙️ Customise Your Schedule</h3>
+    <!-- Version badge -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <h3 style="margin:0;">⚙️ Edit</h3>
+      <button id="tpVersionBadge" onclick="openAboutTP()" style="background:linear-gradient(135deg,#7c3aed,#a855f7);border:none;color:#fff;font-size:10px;font-weight:700;font-family:monospace;padding:4px 10px;border-radius:20px;cursor:pointer;letter-spacing:.3px;transition:opacity .2s;" title="About TryPlanning"></button>
+    </div>
     <div class="modal-section">
       <label class="modal-label">👤 Your Name</label>
       <input class="modal-input" id="customiseName" maxlength="30" onkeydown="if(event.key==='Enter')saveCustomise()"/>
@@ -2336,7 +2387,6 @@ td.schedule-cell.just-undone{animation:cellUndo .3s ease;}
       <button class="sed-add-slot" onclick="sedAddSlot()">＋ Add row</button>
     </div>
     <div style="display:flex;gap:6px;align-items:center;">
-      <span style="font-size:10px;color:var(--text-muted);margin-right:6px;font-family:monospace;" id="tpVersionLabel"></span>
       <button class="sed-btn-reset" onclick="resetEditorToDefault()">↩ Reset</button>
       <button class="sed-btn-cancel" onclick="closeEditor()">Cancel</button>
       <button class="sed-btn-save" onclick="saveEditor()">💾 Save</button>
@@ -6292,9 +6342,21 @@ async function removeFriend(code){
 // ═══ VERSION + LOGO + ANIMATIONS ═══
 const TP_VERSION = 'v2.0 · Apr 2026';
 
-// ── Set version in editor ──
-// Version label set in renderHeader or directly
-document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById('tpVersionLabel');if(el)el.textContent=TP_VERSION;});setTimeout(()=>{const el=document.getElementById('tpVersionLabel');if(el)el.textContent=TP_VERSION;},500);
+// ── Set version badge in Edit modal ──
+function tpSetVersionBadge(){
+  const badge=document.getElementById('tpVersionBadge');
+  if(badge)badge.textContent=TP_VERSION;
+  const av=document.getElementById('tpAboutVersion');
+  if(av)av.textContent=TP_VERSION;
+}
+document.addEventListener('DOMContentLoaded',tpSetVersionBadge);
+setTimeout(tpSetVersionBadge,500);
+
+// ── About TryPlanning popup ──
+function openAboutTP(){
+  tpSetVersionBadge();
+  document.getElementById('tpAboutModal').classList.remove('hidden');
+}
 
 // ── 10 TryPlanning Logo Variants ──
 // 10 Creative TryPlanning logos — all feature the name prominently
