@@ -3060,4 +3060,46 @@ window.TPApp = TPApp;
 </script>
 
 
-</body></html>
+<script>
+(function(){
+  function rescue(){
+    var pill = document.getElementById('nowPillTime');
+    var booted = pill && pill.textContent && pill.textContent.trim() !== '—';
+    var app = document.getElementById('app');
+    var inApp = app && !app.classList.contains('hidden');
+    if (booted || !inApp || !window.TPApp || !window.TP) return;
+
+    function safe(fn){ return function(){ try { fn.apply(this, arguments); } catch(e){ console.error('[rescue]', e); } }; }
+    var bindings = {
+      muteBtn: safe(function(){
+        TP.state.sound = !TP.state.sound;
+        TP.save(window.TP_K && TP_K.sound);
+        TPApp.updateMuteIcon && TPApp.updateMuteIcon();
+        if (TP.state.sound && TP.audio && TP.audio.tap) TP.audio.tap();
+      }),
+      settingsBtn: safe(function(){ TPApp.openSettings && TPApp.openSettings(); }),
+      avatarBtn:  safe(function(){ TPApp.openProfile  && TPApp.openProfile();  }),
+      searchBtn:  safe(function(){ TPApp.openSearch   && TPApp.openSearch();   }),
+      fabNotes:   safe(function(){ TPApp.openNotes    && TPApp.openNotes();    })
+    };
+    for (var id in bindings){
+      var el = document.getElementById(id);
+      if (el && !el.dataset.tpRescued){
+        el.addEventListener('click', bindings[id]);
+        el.dataset.tpRescued = '1';
+      }
+    }
+    // Also try a second render of the active view inside try/catch — might fix
+    // the page so subsequent clicks all work.
+    try { TPApp.renderActiveView && TPApp.renderActiveView(); } catch(_){}
+  }
+  // Run after the app's DOMContentLoaded handler, then poll a couple times.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(rescue, 800); });
+  } else {
+    setTimeout(rescue, 800);
+  }
+  setTimeout(rescue, 2500);
+  setTimeout(rescue, 5000);
+})();
+</script></body></html>
