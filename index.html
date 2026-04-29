@@ -49,7 +49,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .top-bar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:14px;flex-wrap:wrap;}
 
 /* Notes */
-.notes-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius-card);padding:16px;flex:1;min-width:200px;max-width:250px;box-shadow:0 1px 4px var(--shadow);transition:background .4s,border-color .4s;}
+.notes-card{background:var(--card-bg);border-radius:var(--radius-card);padding:16px;flex:1;min-width:200px;max-width:250px;box-shadow:0 2px 12px var(--shadow);transition:background .4s;}
 .notes-card.notes-hidden{display:none!important;}
 .notes-card h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
 .notes-hide-btn{background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-muted);opacity:.5;padding:0 2px;line-height:1;transition:opacity .2s;}
@@ -117,13 +117,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .today-empty{font-size:13px;color:var(--text-subtle);padding:8px 0;}
 
 /* Stats */
-.stats-bar{display:flex;justify-content:center;gap:22px;margin-bottom:14px;flex-wrap:wrap;background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius-card);padding:12px 18px;box-shadow:0 1px 4px var(--shadow);transition:background .4s,border-color .4s;}
+.stats-bar{display:flex;justify-content:center;gap:32px;margin-bottom:16px;flex-wrap:wrap;padding:8px 0;transition:background .4s;}
 .stat{text-align:center;}
-.stat-value{font-size:24px;font-weight:700;color:var(--accent);transition:color .4s;}
+.stat-value{font-size:32px;font-weight:800;color:var(--accent);transition:color .4s;letter-spacing:-.5px;line-height:1;}
 .stat-value.streak{color:var(--today);}
-.stat-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
-.progress-container{max-width:480px;margin:0 auto 18px;background:var(--progress-track);border-radius:12px;height:10px;overflow:hidden;transition:background .4s;}
-.progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-light));border-radius:12px;transition:width .45s ease;width:0%;}
+.stat-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;font-weight:600;}
+.progress-container{max-width:520px;margin:0 auto 20px;background:var(--progress-track);border-radius:99px;height:8px;overflow:hidden;transition:background .4s;}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-light));border-radius:99px;transition:width .5s cubic-bezier(.4,0,.2,1);width:0%;}
 .controls{text-align:center;margin-bottom:14px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;}
 .btn{padding:8px 20px;border-radius:var(--radius-btn);font-size:13px;cursor:pointer;transition:all .2s;font-family:inherit;font-weight:500;}
 .btn-outline{background:var(--card-bg);color:var(--text);border:1px solid var(--card-border);}
@@ -160,14 +160,14 @@ body.resize-mode .rs-hover{outline:2px dashed #d97706!important;outline-offset:2
 #gameToggleBtn.game-on{background:var(--accent);color:#fff;border-color:var(--accent);}
 
 /* Table */
-.table-wrapper{overflow-x:auto;border-radius:var(--radius-card);border:1px solid var(--card-border);background:var(--card-bg);box-shadow:0 1px 6px var(--shadow);transition:background .4s,border-color .4s;}
+.table-wrapper{overflow-x:auto;border-radius:var(--radius-card);background:var(--card-bg);box-shadow:0 2px 16px var(--shadow-md);transition:background .4s;}
 table{width:100%;border-collapse:collapse;min-width:820px;table-layout:fixed;}
-thead th{background:var(--th-bg);padding:14px 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);border-bottom:2px solid var(--table-border);position:sticky;top:0;z-index:2;transition:background .4s;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+thead th{background:var(--th-bg);padding:14px 4px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);border-bottom:1px solid var(--cell-border);position:sticky;top:0;z-index:2;transition:background .4s;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 thead th.today-col{background:var(--today);color:var(--today-text);border-bottom-color:var(--today);}
 thead th.today-col::after{content:"TODAY";font-size:8px;color:rgba(255,255,255,.9);display:block;margin-top:2px;letter-spacing:1.5px;}
 th.time-col{width:88px;text-align:left;padding-left:14px;}
-td{padding:0;border:1px solid var(--cell-border);height:64px;vertical-align:middle;transition:background .4s;overflow:hidden;}
-td.time-cell{padding:10px 10px 10px 14px;font-size:12px;font-weight:600;color:var(--text-muted);background:var(--time-bg);white-space:nowrap;border-right:2px solid var(--table-border);}
+td{padding:0;border:none;border-bottom:1px solid var(--cell-border);height:64px;vertical-align:middle;transition:background .4s;overflow:hidden;}
+td.time-cell{padding:10px 10px 10px 14px;font-size:12px;font-weight:600;color:var(--text-muted);background:var(--time-bg);white-space:nowrap;border-right:1px solid var(--cell-border);border-bottom:1px solid var(--cell-border);}
 td.schedule-cell{position:relative;cursor:pointer;text-align:center;transition:filter .15s,background .4s;background:var(--card-bg);overflow:visible;}
 td.schedule-cell.empty{background:var(--time-bg);cursor:default;}
 td.schedule-cell.today-col{box-shadow:inset 3px 0 0 var(--today);}
@@ -499,9 +499,9 @@ td.schedule-cell:not(.empty):hover{filter:brightness(.96);transform:translateY(-
   .share-actions{flex-direction:column;gap:8px;}
   .share-btn{width:100%;}
   /* Stats — compact horizontal */
-  .stats-bar{flex-wrap:wrap;gap:14px!important;padding:12px 16px!important;border-radius:14px!important;justify-content:center;}
-  .stat-value{font-size:20px!important;}
-  .stat-label{font-size:7px!important;}
+  .stats-bar{flex-wrap:wrap;gap:20px!important;padding:4px 0!important;justify-content:center;}
+  .stat-value{font-size:26px!important;}
+  .stat-label{font-size:8px!important;}
   /* Progress bar */
   .progress-container{max-width:100%!important;margin-bottom:10px!important;}
   /* Controls — wrap and fill */
@@ -5946,17 +5946,28 @@ function tpApplyRemote(d){
           const local=JSON.parse(localStorage.getItem('dv_h')||'[]');
           const merged=[...local];
           remote.forEach(rw=>{if(!merged.find(lw=>lw.wn===rw.wn))merged.push(rw);});
-          // Re-sort newest first and cap at 16 weeks
           merged.sort((a,b)=>(b.wn||'').localeCompare(a.wn||''));
           if(merged.length>16)merged.length=16;
           localStorage.setItem('dv_h',JSON.stringify(merged));
+        }catch(e){localStorage.setItem(k,d[k]);}
+      }else if(k==='dv_s'){
+        // CRITICAL: merge tick state — local always wins to preserve real completions.
+        // This prevents the sync poller from overwriting ticks the user made
+        // between syncs, which caused wrong % in history on week reset.
+        try{
+          const remote=JSON.parse(d[k]||'{}');
+          const local=JSON.parse(localStorage.getItem('dv_s')||'{}');
+          // Union: local overwrites remote for same keys (preserves unticks too)
+          const merged={...remote,...local};
+          Object.keys(merged).forEach(tk=>{if(!merged[tk])delete merged[tk];});
+          localStorage.setItem('dv_s',JSON.stringify(merged));
         }catch(e){localStorage.setItem(k,d[k]);}
       }else{
         localStorage.setItem(k,d[k]);
       }
     }
   });
-  // Reload in-memory state variable (week ticks)
+  // Reload in-memory state from merged localStorage
   try{window.state=JSON.parse(localStorage.getItem('dv_s')||'{}');}catch(e){}
   // Reload custom schedule structure
   if(d['dv_cs']){
