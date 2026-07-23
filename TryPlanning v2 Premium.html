@@ -2251,6 +2251,89 @@ td.schedule-cell[data-cat="lunch"]{background:color-mix(in srgb,var(--cell-lunch
 .hdr-clock{text-shadow:0 1px 0 rgba(255,255,255,.25);}
 </style>
 <style id="aestheticVars">/* aesthetic injected by JS */</style>
+<style id="fluidGlass">
+:root{--ease-fluid:cubic-bezier(.22,1,.36,1);--ease-spring:cubic-bezier(.34,1.4,.5,1);--ease-soft:cubic-bezier(.4,0,.2,1);}
+@media(prefers-reduced-motion:no-preference){
+body{transition:background .32s var(--ease-fluid),color .3s var(--ease-fluid);}
+.today-strip,.notes-card,.field-trips-card,.history-section,.hours-box,.table-wrapper,.today-card,td.schedule-cell,thead th,td.time-cell{transition:background .3s var(--ease-fluid),border-color .3s var(--ease-fluid),color .28s var(--ease-fluid),box-shadow .3s var(--ease-fluid);}
+.btn,.cust-tool-btn,.rem-add,.modal-av-opt,.aes-opt,.modal-theme-opt,.theme-opt,.pd-chip,.pd-dot,.pd-btn,.cust-tab-btn,.avatar-badge,.notes-hide-btn,.ft-undo-btn,.tc-check,.ft-cb{transition:transform .34s var(--ease-spring),box-shadow .34s var(--ease-fluid),background .34s var(--ease-fluid),border-color .3s var(--ease-fluid),color .3s var(--ease-fluid);}
+.btn:active,.cust-tool-btn:active,.rem-add:active,.modal-av-opt:active,.aes-opt:active,.modal-theme-opt:active,.theme-opt:active,.pd-chip:active,.pd-dot:active,.pd-btn:active,.tc-check:active,.ft-cb:active,.avatar-badge:active,.notif-close:active{transform:scale(.93)!important;}
+.modal-box{animation:mboxIn .5s var(--ease-spring);}
+@keyframes mboxIn{0%{opacity:0;transform:scale(.9) translateY(24px)}100%{opacity:1;transform:none}}
+}
+button{-webkit-tap-highlight-color:transparent;}
+/* liquid tap ripple */
+#liquidFxLayer{position:fixed;inset:0;pointer-events:none;z-index:99997;overflow:hidden;}
+.liquid-ripple{position:fixed;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(255,255,255,.85),color-mix(in srgb,var(--accent) 55%,rgba(255,255,255,.4)) 42%,transparent 70%);mix-blend-mode:screen;animation:lrip .62s var(--ease-fluid) forwards;}
+@keyframes lrip{0%{transform:scale(1);opacity:.85}100%{transform:scale(24);opacity:0}}
+/* liquid wash on theme change */
+#liquidWash{position:fixed;inset:0;pointer-events:none;z-index:99996;opacity:0;background:linear-gradient(115deg,transparent 32%,color-mix(in srgb,var(--accent) 26%,rgba(255,255,255,.55)) 50%,transparent 68%);background-size:280% 100%;background-position:120% 0;}
+#liquidWash.go{animation:lwash .8s var(--ease-fluid);}
+@keyframes lwash{0%{opacity:0;background-position:120% 0}22%{opacity:.85}100%{opacity:0;background-position:-40% 0}}
+/* more liquid glass on translucent families */
+:is(body.aes-glass,body.aes-darkglass,body.aes-cloudy,body.aes-space,body.aes-aurora) :is(.today-strip,.notes-card,.field-trips-card,.history-section,.hours-box,.table-wrapper,.modal-box,.focus-modal,.share-modal){backdrop-filter:blur(20px) saturate(1.9);-webkit-backdrop-filter:blur(20px) saturate(1.9);}
+:is(body.aes-glass,body.aes-darkglass,body.aes-cloudy,body.aes-space,body.aes-aurora) :is(.btn,.rem-add,.cust-tool-btn){backdrop-filter:blur(12px) saturate(1.7);-webkit-backdrop-filter:blur(12px) saturate(1.7);}
+:is(body.aes-glass,body.aes-darkglass,body.aes-cloudy,body.aes-space,body.aes-aurora) .lq-rim::after{opacity:.95;}
+body.aes-glass .subtitle,body.aes-cloudy .subtitle{text-shadow:0 1px 3px rgba(255,255,255,.6);}
+body.aes-glass h1,body.aes-cloudy h1{text-shadow:0 1px 4px rgba(255,255,255,.5);}
+/* live preview dock */
+.preview-dock{position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(150%);width:min(700px,calc(100vw - 24px));z-index:9500;opacity:0;transition:transform .55s var(--ease-spring),opacity .4s var(--ease-fluid);}
+.preview-dock.show{transform:translateX(-50%) translateY(0);opacity:1;}
+.preview-dock.hidden{display:none;}
+.pd-inner{position:relative;background:color-mix(in srgb,var(--card-bg) 52%,transparent);backdrop-filter:blur(26px) saturate(2);-webkit-backdrop-filter:blur(26px) saturate(2);border:1px solid color-mix(in srgb,var(--card-border) 70%,transparent);border-radius:26px;padding:13px 15px 15px;box-shadow:0 24px 70px -22px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.5);}
+.pd-head{display:flex;align-items:center;gap:10px;margin:0 4px 4px;}
+.pd-eyebrow{font-size:10px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--text-muted);}
+.pd-name{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--text);flex:1;}
+.pd-close{background:none;border:none;font-size:22px;line-height:1;color:var(--text-muted);cursor:pointer;padding:0 4px;}
+.pd-row-label{font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-subtle);margin:8px 5px 4px;}
+.pd-scroll{display:flex;gap:9px;overflow-x:auto;padding:3px 4px 7px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.pd-scroll::-webkit-scrollbar{display:none;}
+.pd-chip{flex:0 0 auto;width:74px;border-radius:15px;overflow:hidden;cursor:pointer;border:2.5px solid transparent;background:var(--card-bg);box-shadow:0 3px 10px -2px rgba(0,0,0,.18);}
+.pd-chip:hover{transform:translateY(-3px);}
+.pd-chip.sel{border-color:var(--accent);box-shadow:0 8px 20px -6px color-mix(in srgb,var(--accent) 65%,transparent);}
+.pd-chip-prev{height:42px;position:relative;overflow:hidden;}
+.pd-chip-bar{height:26%;width:100%;}
+.pd-chip-cells{position:absolute;inset:32% 8% 8%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8%;}
+.pd-chip-cells i{border-radius:2px;display:block;}
+.pd-chip-name{font-size:9.5px;font-weight:700;text-align:center;padding:5px 3px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pd-dot{flex:0 0 auto;width:38px;height:38px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;box-shadow:0 3px 9px -1px rgba(0,0,0,.22),inset 0 2px 5px rgba(255,255,255,.35);}
+.pd-dot:hover{transform:translateY(-3px);}
+.pd-dot.sel{border-color:var(--text);transform:scale(1.1);}
+.pd-actions{display:flex;gap:10px;margin-top:9px;padding:0 2px;}
+.pd-btn{flex:1;border:none;border-radius:14px;padding:12px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;}
+.pd-exit{background:color-mix(in srgb,var(--card-bg) 55%,transparent);color:var(--text);box-shadow:inset 0 0 0 1.5px var(--card-border),inset 0 1px 0 rgba(255,255,255,.4);}
+.pd-keep{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 86%,#fff),var(--accent));color:#fff;box-shadow:0 10px 24px -8px var(--accent),inset 0 1px 0 rgba(255,255,255,.4);}
+.pd-theme-wrap.hidden{display:none;}
+#customiseModal.preview-mode{background:transparent!important;pointer-events:none;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+#customiseModal.preview-mode .modal-box{opacity:0;transform:scale(.92) translateY(40px);pointer-events:none;animation:none;transition:opacity .38s var(--ease-fluid),transform .45s var(--ease-fluid);}
+/* premium theme crossfade */
+::view-transition-group(root){animation-duration:.5s;}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.5s;animation-timing-function:var(--ease-fluid);}
+/* header grouping */
+.ah-left{align-items:center;gap:16px;padding:2px 0;}
+.header{display:flex;flex-direction:column;justify-content:center;gap:4px;}
+.header h1{line-height:1.1;margin:0;}
+.header .subtitle{margin-top:0;}
+/* empty schedule */
+.sched-empty-row td{padding:0!important;background:transparent!important;border:none!important;}
+.sched-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:52px 22px;text-align:center;animation:mboxIn .55s var(--ease-spring);}
+.se-emoji{font-size:46px;line-height:1;filter:drop-shadow(0 8px 16px rgba(0,0,0,.18));animation:seFloat 3.6s ease-in-out infinite;}
+@keyframes seFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.se-title{font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--text);}
+.se-sub{font-size:13.5px;color:var(--text-muted);max-width:360px;line-height:1.55;text-wrap:pretty;}
+.se-btn{margin-top:8px;border:none;border-radius:999px;padding:12px 26px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;color:#fff;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 86%,#fff),var(--accent));box-shadow:0 12px 26px -10px var(--accent),inset 0 1px 0 rgba(255,255,255,.4);transition:transform .3s var(--ease-spring),box-shadow .3s var(--ease-fluid);}
+.se-btn:hover{transform:translateY(-2px);}
+.se-btn:active{transform:scale(.95);}
+/* Minimal: panel emerges FROM the pop dock (bottom-center), not a right drawer */
+body.aes-clean .min-panel{top:auto!important;right:auto!important;bottom:92px!important;left:50%!important;width:min(460px,92vw)!important;max-width:92vw!important;max-height:68vh!important;border-radius:16px!important;border:1px solid #d8d5d0;box-shadow:0 22px 60px -14px rgba(0,0,0,.3)!important;transform:translateX(-50%);transform-origin:bottom center;animation:minPop .34s var(--ease-spring)!important;overflow:hidden;display:flex;flex-direction:column;}
+body.aes-clean .min-panel-header{border-bottom:1.5px solid #1a1a1a;}
+body.aes-clean .min-panel-body{flex:1;overflow-y:auto;}
+body.aes-clean .min-panel::after{content:"";position:absolute;left:50%;bottom:-9px;width:18px;height:18px;background:#f5f3f0;border-right:1px solid #d8d5d0;border-bottom:1px solid #d8d5d0;transform:translateX(-50%) rotate(45deg);box-shadow:3px 3px 8px rgba(0,0,0,.06);}
+body.aes-clean.min-panel-open .min-fab{z-index:180;box-shadow:0 0 0 3px rgba(26,26,26,.12),0 8px 24px rgba(0,0,0,.16);}
+body.aes-clean .min-panel-overlay{background:rgba(0,0,0,.08);}
+@keyframes minPop{0%{opacity:0;transform:translateX(-50%) translateY(26px) scale(.7)}60%{opacity:1}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+@media(max-width:520px){.pd-name{font-size:14px}.preview-dock{bottom:12px}}
+</style>
 </head>
 <body>
 <div id="lqLightField" aria-hidden="true"><b class="l1"></b><b class="l2"></b><b class="l3"></b><b class="l4"></b></div>
@@ -2680,6 +2763,7 @@ td.schedule-cell[data-cat="lunch"]{background:color-mix(in srgb,var(--cell-lunch
           <span style="font-size:10px;color:var(--text-muted);line-height:1.2;">YouTube</span>
         </div>
         <button onclick="closeCustomise();openApptModal();" class="cust-tool-btn">Reminders</button>
+        <button onclick="newSchedule()" class="cust-tool-btn">New schedule</button>
         <button onclick="exportAllData()" class="cust-tool-btn">Export</button>
         <label class="cust-tool-btn" style="text-align:center;cursor:pointer;">
           Import<input type="file" accept=".json" onchange="importAllData(event)" style="display:none;">
@@ -2706,7 +2790,7 @@ td.schedule-cell[data-cat="lunch"]{background:color-mix(in srgb,var(--cell-lunch
     <div class="modal-actions">
       <button class="btn-sched" onclick="openEditorFromCustomise()">Edit schedule →</button>
       <div class="modal-right-btns">
-        <button class="btn-cancel" onclick="closeCustomise()">Cancel</button>
+        <button class="btn-cancel" onclick="cancelCustomise()">Cancel</button>
         <button class="btn-confirm" onclick="saveCustomise()">Save</button>
       </div>
     </div>
@@ -2780,6 +2864,7 @@ td.schedule-cell[data-cat="lunch"]{background:color-mix(in srgb,var(--cell-lunch
           <button class="sed-mm-item" onclick="sedOpenDuplicateDay()"><span>Duplicate day…</span></button>
           <button class="sed-mm-item" onclick="sedOpenQuickAdd()"><span>Quick add…</span></button>
           <div class="sed-mm-sep"></div>
+          <button class="sed-mm-item" onclick="newSchedule()"><span>New blank schedule</span></button>
           <button class="sed-mm-item sed-mm-danger" onclick="resetEditorToDefault()"><span>Reset to default</span></button>
         </div>
       </div>
@@ -3383,21 +3468,14 @@ function onboardImportFile(e){
 }
 
 // ── CUSTOMISE MODAL ──
-let _cAv,_cTheme,_cAes;
+let _cAv,_cTheme,_cAes,_cAesOrig,_cThemeOrig;
 function openCustomise(){
   SFX.modalOpen();
   _cAv=loadAvatarId();_cTheme=loadThemeId();_cAes=loadAesId();
   document.getElementById("customiseName").value=loadName();
   buildAvGrid("customiseAvGrid","modal-av-opt",_cAv,id=>{_cAv=id;});
-  buildAesGrid("customiseAesGrid",_cAes,id=>{
-    _cAes=id;
-    // Temporarily commit aesthetic choice so color grids show correct per-theme colors
-    localStorage.setItem('dv_aesthetic',id);
-    document.getElementById("themeSection").style.display=id==="default"?"":"none";
-    applyAesthetic(id);
-  });
-  buildThemeGrid("customiseThemeGrid","modal-theme-opt","modal-theme-dot","modal-theme-name",_cTheme,id=>{_cTheme=id;applyTheme(id);});
-  document.getElementById("themeSection").style.display=_cAes==="default"?"":"none";
+  _cAesOrig=_cAes;_cThemeOrig=_cTheme;
+  refreshCustomiseGrids();
   const ytToggle=document.getElementById("ytEnabledToggle");
   if(ytToggle)ytToggle.checked=localStorage.getItem(YT_KEY)==='1';
   custShowTab('Profile');
@@ -3422,6 +3500,133 @@ function saveCustomise(){
   closeCustomise();
 }
 function openEditorFromCustomise(){closeCustomise();openEditor();}
+
+// ── LIQUID FX (tap ripple + theme-change wash) ──
+function liquidRippleAt(x,y){
+  const layer=document.getElementById('liquidFxLayer');if(!layer)return;
+  const r=document.createElement('span');r.className='liquid-ripple';
+  r.style.left=x+'px';r.style.top=y+'px';
+  layer.appendChild(r);setTimeout(()=>r.remove(),660);
+}
+document.addEventListener('pointerdown',e=>{
+  if(!e.target||!e.target.closest)return;
+  const t=e.target.closest('.btn,.cust-tool-btn,.rem-add,.modal-av-opt,.aes-opt,.modal-theme-opt,.theme-opt,.pd-chip,.pd-dot,.pd-btn,.tc-check,.ft-cb,.avatar-badge,.notif-close,.pd-close,button');
+  if(!t||t.disabled)return;
+  liquidRippleAt(e.clientX,e.clientY);
+},{passive:true});
+function liquidWash(){
+  const w=document.getElementById('liquidWash');if(!w)return;
+  w.classList.remove('go');void w.offsetWidth;w.classList.add('go');
+  setTimeout(()=>w.classList.remove('go'),840);
+}
+window.liquidWash=liquidWash;
+function premiumThemeSwap(fn){
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(!reduce&&document.startViewTransition){try{document.startViewTransition(()=>fn());return;}catch(e){}}
+  fn();liquidWash();
+}
+window.premiumThemeSwap=premiumThemeSwap;
+
+// ── LIVE PREVIEW DOCK ──
+let _pdFrom='modal';
+function _custAesPick(id){
+  _cAes=id;localStorage.setItem('dv_aesthetic',id);
+  document.getElementById("themeSection").style.display=id==="default"?"":"none";
+  applyAesthetic(id);openPreviewDock('modal');
+}
+function _custThemePick(id){_cTheme=id;applyTheme(id);openPreviewDock('modal');}
+function refreshCustomiseGrids(){
+  buildAesGrid("customiseAesGrid",_cAes,_custAesPick);
+  buildThemeGrid("customiseThemeGrid","modal-theme-opt","modal-theme-dot","modal-theme-name",_cTheme,_custThemePick);
+  document.getElementById("themeSection").style.display=_cAes==="default"?"":"none";
+}
+function _pdChipMarkup(a){
+  return `<div class="pd-chip-prev" style="background:${a.preview.bg}"><div class="pd-chip-bar" style="background:${a.preview.bar}"></div><div class="pd-chip-cells"><i style="background:${a.preview.c1}"></i><i style="background:${a.preview.c2}"></i><i style="background:${a.preview.c3}"></i></div></div><div class="pd-chip-name">${a.name}</div>`;
+}
+function buildDockAes(){
+  const row=document.getElementById('pdAesRow');row.innerHTML='';
+  AESTHETICS.forEach(a=>{
+    const d=document.createElement('div');
+    d.className='pd-chip'+(a.id===_cAes?' sel':'');
+    d.innerHTML=_pdChipMarkup(a);d.title=a.name;
+    d.addEventListener('click',()=>pdPickAes(a.id));
+    row.appendChild(d);
+  });
+}
+function buildDockThemes(){
+  const row=document.getElementById('pdThemeRow');row.innerHTML='';
+  THEMES.forEach(t=>{
+    const d=document.createElement('div');
+    d.className='pd-dot'+(t.id===_cTheme?' sel':'');
+    d.style.background=t.bg;d.title=t.name;
+    d.addEventListener('click',()=>pdPickTheme(t.id));
+    row.appendChild(d);
+  });
+}
+function pdSyncThemeWrap(){document.getElementById('pdThemeWrap').classList.toggle('hidden',_cAes!=='default');}
+function pdUpdateName(){
+  const a=AESTHETICS.find(x=>x.id===_cAes)||AESTHETICS[0];
+  let nm=a.name;
+  if(_cAes==='default'){const t=THEMES.find(x=>x.id===_cTheme);if(t)nm=t.name;}
+  document.getElementById('pdName').textContent=nm;
+}
+function pdPickAes(id){
+  premiumThemeSwap(()=>{
+    _cAes=id;localStorage.setItem('dv_aesthetic',id);
+    applyAesthetic(id);
+    document.querySelectorAll('#pdAesRow .pd-chip').forEach((c,i)=>c.classList.toggle('sel',AESTHETICS[i].id===id));
+    pdSyncThemeWrap();pdUpdateName();
+  });
+}
+function pdPickTheme(id){
+  premiumThemeSwap(()=>{
+    _cTheme=id;applyTheme(id);
+    document.querySelectorAll('#pdThemeRow .pd-dot').forEach((c,i)=>c.classList.toggle('sel',THEMES[i].id===id));
+    pdUpdateName();
+  });
+}
+function openPreviewDock(from){
+  _pdFrom=from||'modal';
+  if(_pdFrom==='modal')document.getElementById('customiseModal').classList.add('preview-mode');
+  buildDockAes();buildDockThemes();pdSyncThemeWrap();pdUpdateName();
+  const dock=document.getElementById('previewDock');
+  dock.classList.remove('hidden');void dock.offsetWidth;dock.classList.add('show');
+}
+function closePreviewDock(){
+  const dock=document.getElementById('previewDock');
+  dock.classList.remove('show');
+  setTimeout(()=>dock.classList.add('hidden'),460);
+}
+function openThemesDock(){
+  _cAv=loadAvatarId();_cAes=loadAesId();_cTheme=loadThemeId();
+  _cAesOrig=_cAes;_cThemeOrig=_cTheme;
+  openPreviewDock('direct');
+}
+function exitPreviewDock(){
+  const dock=document.getElementById('previewDock');
+  if(!dock||dock.classList.contains('hidden'))return;
+  premiumThemeSwap(()=>{
+    _cAes=_cAesOrig;_cTheme=_cThemeOrig;
+    localStorage.setItem('dv_aesthetic',_cAes);
+    applyAesthetic(_cAes);applyTheme(_cTheme);
+  });
+  closePreviewDock();
+  if(_pdFrom==='modal'){document.getElementById('customiseModal').classList.remove('preview-mode');refreshCustomiseGrids();}
+}
+function keepPreviewDock(){
+  closePreviewDock();
+  if(!_cAv)_cAv=loadAvatarId();
+  saveAesId(_cAes);saveThemeId(_cTheme);localStorage.setItem('dv_aesthetic',_cAes);
+  updateHeader(loadName(),_cAv,_cTheme);applyAesthetic(_cAes);
+  if(_pdFrom==='modal'){const m=document.getElementById('customiseModal');m.classList.remove('preview-mode');m.classList.add('hidden');}
+  if(typeof _dvToast==='function')_dvToast('Look applied ✨');
+}
+function cancelCustomise(){
+  const savedAes=loadAesId(),savedTheme=loadThemeId();
+  localStorage.setItem('dv_aesthetic',savedAes);
+  applyAesthetic(savedAes);applyTheme(savedTheme);
+  closeCustomise();
+}
 
 function _dvToast(msg){
   let t=document.getElementById('_dvToast');
@@ -3543,9 +3748,32 @@ function updateStats(){
   _lastStreak=str;
 }
 
+// ── NEW / EMPTY SCHEDULE ──
+const EMPTY_MSGS=[
+  {emoji:'🗓️',title:'Nothing here yet',sub:'Your week is a blank canvas — let’s fill it in.'},
+  {emoji:'😴',title:'Being lazy, huh?',sub:'No blocks, no plans. Tap below to actually do something.'},
+  {emoji:'🌱',title:'A fresh start',sub:'Empty schedule detected. Plant your first block.'},
+  {emoji:'🫧',title:'So empty, so peaceful',sub:'…but you probably came here to plan something.'},
+  {emoji:'✍️',title:'Please create a new schedule',sub:'Your future self will thank you — start now.'},
+];
+function renderEmptySchedule(){
+  const tbody=document.getElementById("scheduleBody");
+  const m=EMPTY_MSGS[Math.floor(Math.random()*EMPTY_MSGS.length)];
+  tbody.innerHTML=`<tr class="sched-empty-row"><td colspan="8"><div class="sched-empty"><div class="se-emoji">${m.emoji}</div><div class="se-title">${m.title}</div><div class="se-sub">${m.sub}</div><button class="se-btn" onclick="openEditor()">＋ Create my schedule</button></div></td></tr>`;
+}
+function newSchedule(){
+  if(!confirm("Start a brand-new, empty schedule?\n\nThis clears every block from your week. You can build it back up in the editor."))return;
+  customSchedule=[];saveCustomSched([]);
+  state={};saveSched(state);
+  if(typeof closeEditor==='function')closeEditor();
+  if(typeof closeCustomise==='function')closeCustomise();
+  buildTable();buildTodayStrip();updateStats();
+  if(typeof _dvToast==='function')_dvToast('Blank canvas ready ✨');
+}
 // ── TABLE ──
 function buildTable(){
   const tbody=document.getElementById("scheduleBody");tbody.innerHTML="";
+  if(!getCurrentSched().length){renderEmptySchedule();return;}
   const today=todayIdx(),cn=loadCellNotes();
   const TL={class:"Class",study:"Self Study",routine:"Routine",lunch:"Break"};
   for(let i=0;i<7;i++){const th=document.getElementById("th-"+i);if(th)th.classList.toggle("today-col",i===today);}
@@ -4177,6 +4405,35 @@ function resetAllResizes(){
   localStorage.removeItem(rsKey());
   applyAllResizes();
 }
+
+// ── APPLY-SCOPE DIALOG (this theme vs all themes) ──
+let _scopeKind=null,_scopeAfter=null;
+function askApplyScope(kind,after){
+  _scopeKind=kind;_scopeAfter=after||null;
+  const map=kind==='resize'?loadRS():loadFP();
+  if(!map||!Object.keys(map).length){if(after)after();return;}
+  const curId=localStorage.getItem('dv_aesthetic')||'default';
+  const aesName=((typeof AESTHETICS!=='undefined'&&AESTHETICS.find(a=>a.id===curId))||{}).name||'this look';
+  const eb=document.getElementById('scopeEyebrow'),ti=document.getElementById('scopeTitle'),su=document.getElementById('scopeSub');
+  if(eb)eb.textContent=kind==='resize'?'Sizes':'Font colours';
+  if(ti)ti.textContent='Save your '+(kind==='resize'?'size changes':'colour changes');
+  if(su)su.textContent='Keep them just for the '+aesName+' theme, or apply them across every theme?';
+  document.getElementById('scopeModal').classList.remove('hidden');
+}
+function scopeChoose(scope){
+  const kind=_scopeKind;
+  if(scope==='all'&&kind){
+    const map=kind==='resize'?loadRS():loadFP();
+    const prefix=kind==='resize'?RS_KEY_PREFIX:FP_KEY_PREFIX;
+    if(typeof AESTHETICS!=='undefined')AESTHETICS.forEach(a=>localStorage.setItem(prefix+a.id,JSON.stringify(map)));
+    if(typeof _dvToast==='function')_dvToast('Applied to all themes ✨');
+  }
+  document.getElementById('scopeModal').classList.add('hidden');
+  const after=_scopeAfter;_scopeKind=null;_scopeAfter=null;
+  if(after)after();
+}
+function finishResizeMode(){askApplyScope('resize',function(){if(typeof _rsMode!=='undefined'&&_rsMode)toggleResizeMode();});}
+function finishFontPaintMode(){askApplyScope('font',function(){if(typeof _fpMode!=='undefined'&&_fpMode)toggleFontPaintMode();});}
 
 // Hover highlighting
 document.addEventListener('mouseover',function(e){
@@ -5120,7 +5377,7 @@ function smtDoQuickAdd(){
 }
 
 
-document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeNote();closeCustomise();closeEditor();closeHours();closeFocus();closeShare();if(typeof closeMinPanel==='function')closeMinPanel();document.getElementById("iosPopup").classList.add("hidden");if(_rsMode)toggleResizeMode();closeResizePopup();}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(typeof exitPreviewDock==='function')exitPreviewDock();closeNote();closeCustomise();closeEditor();closeHours();closeFocus();closeShare();if(typeof closeMinPanel==='function')closeMinPanel();document.getElementById("iosPopup").classList.add("hidden");if(_rsMode)toggleResizeMode();closeResizePopup();}});
 
 // ── HOURS BREAKDOWN ──
 const HOUR_META={
@@ -6031,9 +6288,9 @@ function downloadShareImage(){
 </script>
 
 <!-- Font paint mode: floating exit button -->
-<button id="fpExitBtn" onclick="toggleFontPaintMode()" style="display:none;position:fixed;bottom:24px;right:24px;z-index:9300;background:#7c3aed;color:#fff;border:none;border-radius:14px;padding:12px 22px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(124,58,237,.5);font-family:inherit;transition:opacity .2s,transform .15s;letter-spacing:-.2px;">✕ Exit Paint Mode</button>
+<button id="fpExitBtn" onclick="finishFontPaintMode()" style="display:none;position:fixed;bottom:24px;right:24px;z-index:9300;background:#7c3aed;color:#fff;border:none;border-radius:14px;padding:12px 22px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(124,58,237,.5);font-family:inherit;transition:opacity .2s,transform .15s;letter-spacing:-.2px;">✓ Save &amp; done</button>
 <!-- Resize mode: floating exit button -->
-<button id="rsExitBtn" onclick="toggleResizeMode()" style="display:none;position:fixed;bottom:24px;right:24px;z-index:9300;background:#d97706;color:#fff;border:none;border-radius:14px;padding:12px 22px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(217,119,6,.5);font-family:inherit;align-items:center;gap:6px;">✕ Exit Resize Mode</button>
+<button id="rsExitBtn" onclick="finishResizeMode()" style="display:none;position:fixed;bottom:24px;right:24px;z-index:9300;background:#d97706;color:#fff;border:none;border-radius:14px;padding:12px 22px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(217,119,6,.5);font-family:inherit;align-items:center;gap:6px;">✓ Save &amp; done</button>
 <!-- Font colour painter popup -->
 <div id="fontPaintPopup" class="hidden">
   <div class="fp-target-label">
@@ -6586,5 +6843,37 @@ if(_origApplyAes2){window.applyAesthetic=function(id){_origApplyAes2(id);applyAl
   },{passive:true});
 })();
 </script>
+<div class="modal-overlay hidden" id="scopeModal" onclick="if(event.target===this)document.getElementById('scopeModal').classList.add('hidden')">
+  <div class="modal-box" style="width:400px;max-width:100%;text-align:center;">
+    <div class="pd-eyebrow" id="scopeEyebrow" style="display:block;">Save tweaks</div>
+    <h3 id="scopeTitle" style="margin:6px 0 8px;">Apply your changes</h3>
+    <p id="scopeSub" style="font-size:13.5px;color:var(--text-muted);margin:0 0 18px;line-height:1.55;"></p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="pd-btn pd-keep" onclick="scopeChoose('all')">Apply to all themes</button>
+      <button class="pd-btn pd-exit" onclick="scopeChoose('this')">Only this theme</button>
+    </div>
+  </div>
+</div>
+<div id="liquidFxLayer" aria-hidden="true"></div>
+<div id="liquidWash" aria-hidden="true"></div>
+<div id="previewDock" class="preview-dock hidden" aria-live="polite">
+  <div class="pd-inner lq-rim">
+    <div class="pd-head">
+      <span class="pd-eyebrow">Live preview</span>
+      <span class="pd-name" id="pdName">Default</span>
+      <button class="pd-close" onclick="exitPreviewDock()" title="Exit preview" aria-label="Exit preview">&times;</button>
+    </div>
+    <div class="pd-row-label">Visual style — tap to preview</div>
+    <div class="pd-scroll" id="pdAesRow"></div>
+    <div class="pd-theme-wrap" id="pdThemeWrap">
+      <div class="pd-row-label">Colour</div>
+      <div class="pd-scroll" id="pdThemeRow"></div>
+    </div>
+    <div class="pd-actions">
+      <button class="pd-btn pd-exit" onclick="exitPreviewDock()">Exit preview</button>
+      <button class="pd-btn pd-keep" onclick="keepPreviewDock()">Use this look ✓</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
