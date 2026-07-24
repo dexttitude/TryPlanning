@@ -1344,8 +1344,8 @@ body.aes-glass .table-wrapper::after{content:'';position:absolute;inset:0;pointe
   background:linear-gradient(135deg,rgba(255,255,255,.25) 0%,transparent 60%);
 }
 body.aes-glass .table-wrapper{position:relative;overflow:hidden;}
-/* Glass: yellow accent line on today header arrow */
-body.aes-glass thead th.today-col{border-bottom:3px solid #f59e0b!important;box-shadow:0 3px 0 #f59e0b!important;}
+/* Glass: single today underline (no stacked lines) */
+body.aes-glass thead th.today-col{border-bottom-color:transparent!important;box-shadow:none!important;}
 body.aes-glass thead th.today-col::after{color:#fff59d!important;}
 
 /* Artistic: paper texture background using CSS */
@@ -2122,7 +2122,7 @@ thead th.today-col::after{letter-spacing:2px;}
 @media(max-width:640px){.ah-right{align-items:center;}}
 
 /* ── interaction & table polish ── */
-thead th.today-col{background:var(--th-bg);color:var(--today);position:relative;border-bottom-color:var(--cell-border);}
+thead th.today-col{background:var(--th-bg);color:var(--today);position:relative;border-bottom-color:transparent;}
 thead th.today-col::before{content:"";position:absolute;left:16%;right:16%;bottom:0;height:3px;border-radius:3px 3px 0 0;background:var(--today);}
 thead th.today-col::after{color:var(--today);opacity:.8;}
 td.schedule-cell.today-col{box-shadow:none;}
@@ -2324,6 +2324,18 @@ body.aes-glass h1,body.aes-cloudy h1{text-shadow:0 1px 4px rgba(255,255,255,.5);
 .se-btn{margin-top:8px;border:none;border-radius:999px;padding:12px 26px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;color:#fff;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 86%,#fff),var(--accent));box-shadow:0 12px 26px -10px var(--accent),inset 0 1px 0 rgba(255,255,255,.4);transition:transform .3s var(--ease-spring),box-shadow .3s var(--ease-fluid);}
 .se-btn:hover{transform:translateY(-2px);}
 .se-btn:active{transform:scale(.95);}
+/* Header identity card — big avatar spanning name + date, liquid glass */
+body:not(.aes-clean) .ah-left{background:color-mix(in srgb,var(--card-bg) 62%,transparent);border:1px solid color-mix(in srgb,var(--card-border) 78%,transparent);border-radius:22px;padding:13px 24px 13px 13px;gap:17px;flex:0 1 auto;backdrop-filter:blur(22px) saturate(1.8);-webkit-backdrop-filter:blur(22px) saturate(1.8);box-shadow:0 12px 36px -16px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.45);}
+body:not(.aes-clean) .avatar-badge{width:64px;height:64px;border-radius:19px;}
+body:not(.aes-clean) .header{gap:5px;justify-content:center;}
+body:not(.aes-clean) .header .subtitle{margin-top:0;}
+/* Align week label under the name: drop the empty logo box so name starts at card's left edge */
+#tpLogo:empty{display:none;}
+/* No floating on header — replace drift with a subtle, static accent-glow breath on every theme */
+body.aes-cloudy .header h1,body.aes-cloudy .avatar-badge,body.aes-cloudy .header .subtitle,body.aes-pastel .avatar-badge,body.aes-space .avatar-badge,body.aes-glass .header .subtitle{animation:none!important;transform:none!important;}
+@media(prefers-reduced-motion:no-preference){body:not(.aes-clean) .avatar-badge{animation:avGlowBreath 5.5s var(--ease-soft) infinite!important;}}
+@keyframes avGlowBreath{0%,100%{box-shadow:0 6px 18px -11px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.4)}50%{box-shadow:0 9px 26px -9px color-mix(in srgb,var(--accent) 60%,rgba(0,0,0,.3)),inset 0 1px 0 rgba(255,255,255,.6)}}
+@media(max-width:640px){body:not(.aes-clean) .ah-left{padding:11px 16px 11px 11px;gap:13px;}body:not(.aes-clean) .avatar-badge{width:52px!important;height:52px!important;}}
 /* Minimal: panel emerges FROM the pop dock (bottom-center), not a right drawer */
 body.aes-clean .min-panel{top:auto!important;right:auto!important;bottom:92px!important;left:50%!important;width:min(460px,92vw)!important;max-width:92vw!important;max-height:68vh!important;border-radius:16px!important;border:1px solid #d8d5d0;box-shadow:0 22px 60px -14px rgba(0,0,0,.3)!important;transform:translateX(-50%);transform-origin:bottom center;animation:minPop .34s var(--ease-spring)!important;overflow:hidden;display:flex;flex-direction:column;}
 body.aes-clean .min-panel-header{border-bottom:1.5px solid #1a1a1a;}
@@ -2505,7 +2517,7 @@ body.aes-clean .min-panel-overlay{background:rgba(0,0,0,.08);}
     <div id="miniGameWidget" style="display:none;margin-top:6px;">
       <canvas id="dinoCanvas" width="240" height="110" style="border-radius:10px;display:block;cursor:pointer;width:100%;"></canvas>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;padding:0 2px;">
-        <span style="font-size:9px;color:var(--text-muted);">Tap to jump • Double-tap: double jump</span>
+        <span style="font-size:9px;color:var(--text-muted);">Tap / Space to jump • again = double jump</span>
         <span id="dinoScore" style="font-size:10px;font-weight:700;color:var(--accent);">0</span>
       </div>
     </div>
@@ -3099,30 +3111,15 @@ const THEMES=[
 
 // ── SCHEDULE DATA ──
 const SCHEDULE=[
-  {t:"12 – 1 AM", s:[null,null,null,null,null,null,null]},
-  {t:"1 – 2 AM",  s:[null,null,null,null,null,null,null]},
-  {t:"2 – 3 AM",  s:[null,null,null,null,null,null,null]},
-  {t:"3 – 4 AM",  s:[null,null,null,null,null,null,null]},
-  {t:"4 – 5 AM",  s:[null,null,null,null,null,null,null]},
-  {t:"5 – 6 AM",  s:[null,null,null,null,null,null,null]},
-  {t:"6 – 7 AM",  s:[null,null,null,null,null,null,null]},
-  {t:"7 – 8 AM",  s:[["Waking up","routine"],null,["Waking up","routine"],null,null,null,null]},
-  {t:"8 – 9 AM",  s:[["Socio-Economic Perspective","class"],["Waking up","routine"],null,["Waking up","routine"],["Waking up","routine"],["Waking up","routine"],["Waking up","routine"]]},
-  {t:"9 – 10 AM", s:[["Socio-Economic Perspective","class"],null,["Business Administration","class"],null,null,null,null]},
-  {t:"10 – 11 AM",s:[["Socio-Economic Perspective","class"],["Study","study"],["Business Administration","class"],["Study","study"],["Study","study"],["Study","study"],["Study","study"]]},
-  {t:"11 – 12 PM",s:[["Socio-Economic Perspective","class"],null,["Business Administration","class"],["Study","study"],["Study","study"],["Study","study"],["Study","study"]]},
-  {t:"12 – 1 PM", s:[["Lunch","lunch"],["Lunch","lunch"],["Lunch","lunch"],["Lunch","lunch"],["Lunch","lunch"],["Lunch","lunch"],["Lunch","lunch"]]},
-  {t:"1 – 2 PM",  s:[["Lunch","lunch"],["Lunch","lunch"],["Lunch","lunch"],["Lunch","lunch"],["Lunch","lunch"],["Lunch","lunch"],["Lunch","lunch"]]},
-  {t:"2 – 3 PM",  s:[["Planetary Thinking","class"],["Study","study"],null,null,null,null,null]},
-  {t:"3 – 4 PM",  s:[["Planetary Thinking","class"],["Study","study"],null,["Study","study"],["Study","study"],["Study","study"],null]},
-  {t:"4 – 5 PM",  s:[["Planetary Thinking","class"],null,["Study","study"],["Study","study"],["Study","study"],["Study","study"],["Study","study"]]},
-  {t:"5 – 6 PM",  s:[["Planetary Thinking","class"],null,["Study","study"],["Study","study"],["Study","study"],["Study","study"],["Study","study"]]},
-  {t:"6 – 7 PM",  s:[null,["Power and Democracy","class"],["Study","study"],null,null,null,null]},
-  {t:"7 – 8 PM",  s:[null,["Power and Democracy","class"],null,null,null,null,null]},
-  {t:"8 – 9 PM",  s:[null,null,null,null,null,null,null]},
-  {t:"9 – 10 PM", s:[null,null,null,null,null,null,null]},
-  {t:"10 – 11 PM",s:[null,null,null,null,null,null,null]},
-  {t:"11 – 12 AM",s:[null,null,null,null,null,null,null]},
+  {t:"8 – 9 AM",   s:[["Morning Routine","routine"],["Morning Routine","routine"],["Morning Routine","routine"],["Morning Routine","routine"],["Morning Routine","routine"],["Sleep In","routine"],["Sleep In","routine"]]},
+  {t:"9 – 10 AM",  s:[["Biology","class"],["Mathematics","class"],["Biology","class"],["Mathematics","class"],["Chemistry","class"],["Reading","study"],null]},
+  {t:"10 – 11 AM", s:[["History","class"],["Physics Lab","class"],["History","class"],["Physics Lab","class"],["Art & Design","class"],["Hobby Time","routine"],["Brunch","lunch"]]},
+  {t:"11 – 12 PM", s:[["Study Hall","study"],["Study Hall","study"],["Free Period","routine"],["Study Hall","study"],["Study Hall","study"],null,null]},
+  {t:"12 – 1 PM",  s:[["Lunch","lunch"],["Lunch","lunch"],["Lunch","lunch"],["Lunch","lunch"],["Lunch","lunch"],["Lunch","lunch"],["Lunch","lunch"]]},
+  {t:"1 – 2 PM",   s:[["English","class"],["Chemistry","class"],["English","class"],["Chemistry","class"],["Music","class"],["Family Time","routine"],["Family Time","routine"]]},
+  {t:"2 – 3 PM",   s:[["Group Study","study"],["Revision","study"],["Group Study","study"],["Revision","study"],["Clubs","routine"],null,null]},
+  {t:"3 – 4 PM",   s:[["Homework","study"],["Sports","routine"],["Homework","study"],["Sports","routine"],["Homework","study"],["Outing","routine"],null]},
+  {t:"4 – 5 PM",   s:[["Piano","routine"],null,["Coding Club","class"],null,["Piano","routine"],null,null]},
 ];
 const ALL_TIME_LABELS=["12 – 1 AM","1 – 2 AM","2 – 3 AM","3 – 4 AM","4 – 5 AM","5 – 6 AM","6 – 7 AM","7 – 8 AM","8 – 9 AM","9 – 10 AM","10 – 11 AM","11 – 12 PM","12 – 1 PM","1 – 2 PM","2 – 3 PM","3 – 4 PM","4 – 5 PM","5 – 6 PM","6 – 7 PM","7 – 8 PM","8 – 9 PM","9 – 10 PM","10 – 11 PM","11 – 12 AM"];
 const BLANK_SCHED=ALL_TIME_LABELS.map(t=>({t,s:[null,null,null,null,null,null,null]}));
@@ -3637,6 +3634,12 @@ function _dvToast(msg){
   clearTimeout(t._to);t._to=setTimeout(()=>{t.style.opacity='0';},3000);
 }
 
+async function _tpHardRefresh(){
+  try{if('serviceWorker' in navigator){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()));}}catch(e){}
+  try{if('caches' in window){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
+  const base=location.href.split('#')[0].split('?')[0];
+  location.replace(base+'?u='+Date.now());
+}
 async function checkForUpdate(){
   const btn=document.getElementById('updateBtn');
   if(btn){btn.textContent='Checking…';btn.style.opacity='.6';}
@@ -3656,20 +3659,13 @@ async function checkForUpdate(){
     }
     // Newer version available
     if(confirm('Update available! 🎉\n\nYou have: '+TP_VERSION+'\nLatest: '+remoteVersion+'\n\nTap OK to update — your data stays safe.')){
-      // Clear all caches
-      if('caches' in window){
-        const keys=await caches.keys();
-        await Promise.all(keys.map(k=>caches.delete(k)));
-      }
-      // Force reload from server, bypassing all cache
-      window.location.href=GITHUB_URL+'?v='+Date.now();
+      await _tpHardRefresh();
     }
   }catch(e){
     if(btn){btn.textContent='Update';btn.style.opacity='1';}
     // If can't reach GitHub, just force-reload current page
     if(confirm('Could not check GitHub. Reload to get the latest version?')){
-      if('caches' in window){const keys=await caches.keys();await Promise.all(keys.map(k=>caches.delete(k)));}
-      window.location.reload(true);
+      await _tpHardRefresh();
     }
   }
 }
@@ -4476,10 +4472,13 @@ document.addEventListener('click',function(e){
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeResizePopup();if(_rsMode)toggleResizeMode();}});
 
 // ── MINI DINO GAME ──
-let _gameOn=false,_dinoRaf=null;
+let _gameOn=false,_dinoRaf=null,_dinoLast=0,_dinoKeyBound=false;
+const DINO_GRAV=1250,DINO_JUMP=350;
 let _dinoState={
-  x:20,y:0,vy:0,jumping:false,doubleJump:false,dead:false,score:0,hiScore:parseInt(localStorage.getItem('dv_game_hi')||0),
-  speed:3,obstacles:[],frameCount:0,canvas:null,ctx:null,lastTapTime:0
+  x:24,y:0,vy:0,jumping:false,doubleJump:false,dead:false,score:0,scoreAcc:0,level:1,
+  hiScore:parseInt(localStorage.getItem('dv_game_hi')||0),
+  bestLevel:parseInt(localStorage.getItem('dv_game_lvl')||1),
+  speed:150,obstacles:[],spawnTimer:0,started:false,flash:0,canvas:null,ctx:null
 };
 function toggleMiniGame(){
   _gameOn=!_gameOn;
@@ -4490,127 +4489,109 @@ function toggleMiniGame(){
     btn.classList.toggle('game-on',_gameOn);
     btn.textContent=_gameOn?'✕ Close Game':'Play a game';
   }
-  if(_gameOn){
-    initDinoGame();
-  }else{
-    if(_dinoRaf){cancelAnimationFrame(_dinoRaf);_dinoRaf=null;}
-  }
+  if(_gameOn){initDinoGame();}
+  else if(_dinoRaf){cancelAnimationFrame(_dinoRaf);_dinoRaf=null;}
 }
 function initDinoGame(){
   const canvas=document.getElementById('dinoCanvas');
   if(!canvas)return;
-  _dinoState.canvas=canvas;
-  _dinoState.ctx=canvas.getContext('2d');
-  _dinoState.x=20;_dinoState.y=0;_dinoState.vy=0;_dinoState.jumping=false;_dinoState.doubleJump=false;
-  _dinoState.dead=false;_dinoState.score=0;_dinoState.speed=3;_dinoState.obstacles=[];_dinoState.frameCount=0;
+  if(_dinoRaf){cancelAnimationFrame(_dinoRaf);_dinoRaf=null;}
+  const s=_dinoState;
+  s.canvas=canvas;s.ctx=canvas.getContext('2d');
+  s.x=24;s.y=canvas.height-22-16;s.vy=0;s.jumping=false;s.doubleJump=false;
+  s.dead=false;s.score=0;s.scoreAcc=0;s.level=1;s.speed=150;
+  s.obstacles=[];s.spawnTimer=0.9;s.started=false;s.flash=0;
   canvas.onclick=dinoTap;
-  dinoLoop();
+  if(!_dinoKeyBound){document.addEventListener('keydown',dinoKey);_dinoKeyBound=true;}
+  _dinoLast=0;
+  _dinoRaf=requestAnimationFrame(dinoLoop);
 }
-function dinoTap(){
-  if(_dinoState.dead){
-    initDinoGame();
-    return;
-  }
-  const now=Date.now();
-  const isDoubleTap=now-_dinoState.lastTapTime<300;
-  _dinoState.lastTapTime=now;
-  if(!_dinoState.jumping){
-    _dinoState.jumping=true;_dinoState.vy=-8;_dinoState.doubleJump=false;
-  }else if(!_dinoState.doubleJump&&isDoubleTap){
-    _dinoState.vy=-8;_dinoState.doubleJump=true;
-  }
+function dinoKey(e){
+  if(!_gameOn)return;
+  const k=e.key,c=e.code,tag=(e.target&&e.target.tagName)||'';
+  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT')return;
+  if(c==='Space'||c==='ArrowUp'||k===' '||k==='ArrowUp'||k==='w'||k==='W'){e.preventDefault();dinoJump();}
 }
-function dinoLoop(){
-  const canvas=_dinoState.canvas;
-  const ctx=_dinoState.ctx;
-  if(!ctx)return;
-  const w=240,h=110,groundY=85,charSize=16;
-  // Get colors from CSS variables
-  const bgColor=getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()||'#f5f5f7';
-  const textColor=getComputedStyle(document.documentElement).getPropertyValue('--text').trim()||'#000';
-  // Clear
-  ctx.fillStyle=bgColor;
-  ctx.fillRect(0,0,w,h);
-  // Ground line
-  ctx.strokeStyle=textColor;
-  ctx.globalAlpha=0.2;
-  ctx.lineWidth=1;
-  ctx.beginPath();
-  ctx.moveTo(0,groundY);
-  ctx.lineTo(w,groundY);
-  ctx.stroke();
-  ctx.globalAlpha=1;
-  // Update character position
-  _dinoState.vy+=0.5;
-  _dinoState.y+=_dinoState.vy;
-  if(_dinoState.y+charSize>=groundY){
-    _dinoState.y=groundY-charSize;
-    _dinoState.vy=0;
-    _dinoState.jumping=false;
-  }
-  // Draw character (small square with face)
-  ctx.fillStyle=textColor;
-  ctx.fillRect(_dinoState.x,_dinoState.y,charSize,charSize);
-  // Eyes
-  ctx.fillStyle='white';
-  ctx.fillRect(_dinoState.x+3,_dinoState.y+4,2,2);
-  ctx.fillRect(_dinoState.x+11,_dinoState.y+4,2,2);
-  // Spawn obstacles
-  if(_dinoState.frameCount%80===0){
-    const h=20+Math.random()*20;
-    _dinoState.obstacles.push({x:w,y:groundY-h,w:12,h:h});
-  }
-  // Update and draw obstacles
-  ctx.fillStyle=textColor;
-  ctx.globalAlpha=0.6;
-  for(let i=_dinoState.obstacles.length-1;i>=0;i--){
-    const obs=_dinoState.obstacles[i];
-    obs.x-=_dinoState.speed;
-    ctx.fillRect(obs.x,obs.y,obs.w,obs.h);
-    // Collision
-    if(_dinoState.x+charSize>obs.x&&_dinoState.x<obs.x+obs.w&&_dinoState.y+charSize>obs.y){
-      _dinoState.dead=true;
-      if(_dinoState.score>_dinoState.hiScore){
-        _dinoState.hiScore=_dinoState.score;
-        localStorage.setItem('dv_game_hi',_dinoState.hiScore);
+function dinoJump(){
+  const s=_dinoState;
+  if(s.dead){initDinoGame();return;}
+  s.started=true;
+  if(!s.jumping){s.jumping=true;s.vy=-DINO_JUMP;s.doubleJump=false;}
+  else if(!s.doubleJump){s.vy=-DINO_JUMP*0.9;s.doubleJump=true;}
+}
+function dinoTap(){dinoJump();}
+function dinoLoop(ts){
+  const s=_dinoState,ctx=s.ctx,canvas=s.canvas;
+  if(!ctx){_dinoRaf=null;return;}
+  if(!_dinoLast)_dinoLast=ts;
+  let dt=(ts-_dinoLast)/1000;_dinoLast=ts;
+  if(!(dt>0))dt=0;if(dt>0.05)dt=0.05;
+  const w=canvas.width,h=canvas.height,groundY=h-22,charSize=16;
+  const cs=getComputedStyle(document.documentElement);
+  const bgColor=cs.getPropertyValue('--bg').trim()||'#f5f5f7';
+  const textColor=cs.getPropertyValue('--text').trim()||'#111';
+  const accent=cs.getPropertyValue('--accent').trim()||'#7c3aed';
+  // ---- update ----
+  if(s.started&&!s.dead){
+    s.vy+=DINO_GRAV*dt;s.y+=s.vy*dt;
+    if(s.y+charSize>=groundY){s.y=groundY-charSize;s.vy=0;s.jumping=false;s.doubleJump=false;}
+    s.spawnTimer-=dt;
+    if(s.spawnTimer<=0){
+      const oh=15+Math.random()*22;
+      s.obstacles.push({x:w+8,y:groundY-oh,w:9+Math.random()*9,h:oh});
+      s.spawnTimer=Math.max(0.6,1.35-(s.level-1)*0.07)+Math.random()*0.5;
+    }
+    for(let i=s.obstacles.length-1;i>=0;i--){
+      const o=s.obstacles[i];o.x-=s.speed*dt;
+      if(o.x+o.w<-2){s.obstacles.splice(i,1);continue;}
+      if(s.x+charSize-3>o.x&&s.x+3<o.x+o.w&&s.y+charSize-2>o.y){
+        s.dead=true;
+        if(s.score>s.hiScore){s.hiScore=s.score;localStorage.setItem('dv_game_hi',s.hiScore);}
+        if(s.level>s.bestLevel){s.bestLevel=s.level;localStorage.setItem('dv_game_lvl',s.bestLevel);}
       }
     }
-    if(obs.x+obs.w<0)_dinoState.obstacles.splice(i,1);
+    s.scoreAcc+=dt*10;s.score=Math.floor(s.scoreAcc);
+    const nl=Math.floor(s.score/10)+1;
+    if(nl>s.level){s.level=nl;s.flash=1;s.speed=150+(s.level-1)*24;}
   }
+  if(s.flash>0)s.flash=Math.max(0,s.flash-dt*1.5);
+  // ---- draw ----
+  ctx.fillStyle=bgColor;ctx.fillRect(0,0,w,h);
+  ctx.strokeStyle=textColor;ctx.globalAlpha=.16;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,groundY+.5);ctx.lineTo(w,groundY+.5);ctx.stroke();ctx.globalAlpha=1;
+  ctx.fillStyle=accent;ctx.globalAlpha=.82;
+  s.obstacles.forEach(o=>ctx.fillRect(o.x,o.y,o.w,o.h));
   ctx.globalAlpha=1;
-  // Score
-  _dinoState.frameCount++;
-  if(!_dinoState.dead){
-    if(_dinoState.frameCount%60===0)_dinoState.score++;
-    _dinoState.speed+=0.1/300;
-  }
+  ctx.fillStyle=textColor;ctx.fillRect(s.x,s.y,charSize,charSize);
+  ctx.fillStyle=bgColor;ctx.fillRect(s.x+10,s.y+4,2.5,2.5);
+  ctx.fillStyle=textColor;ctx.textAlign='left';ctx.font='bold 10px sans-serif';
+  ctx.fillText('Lv '+s.level,5,12);
+  ctx.textAlign='right';ctx.fillText('Score '+s.score,w-5,12);
+  ctx.globalAlpha=.55;ctx.font='9px sans-serif';
+  ctx.fillText('Best '+s.hiScore+' · Lv'+s.bestLevel,w-5,23);
+  ctx.globalAlpha=1;
   const scoreEl=document.getElementById('dinoScore');
-  if(scoreEl)scoreEl.textContent=_dinoState.score;
-  // Draw score on canvas
-  ctx.fillStyle=textColor;
-  ctx.font='bold 10px sans-serif';
-  ctx.textAlign='right';
-  ctx.fillText('Score: '+_dinoState.score,w-4,12);
-  if(_dinoState.hiScore>0)ctx.fillText('Hi: '+_dinoState.hiScore,w-4,24);
-  // Game over message
-  if(_dinoState.dead){
-    ctx.fillStyle='rgba(0,0,0,0.3)';
-    ctx.fillRect(0,0,w,h);
-    ctx.fillStyle=textColor;
-    ctx.font='bold 12px sans-serif';
-    ctx.textAlign='center';
-    ctx.fillText('GAME OVER',w/2,h/2-8);
+  if(scoreEl)scoreEl.textContent=s.score;
+  if(s.flash>0){
+    ctx.globalAlpha=s.flash*.45;ctx.fillStyle=accent;ctx.fillRect(0,0,w,h);ctx.globalAlpha=1;
+    ctx.fillStyle=textColor;ctx.textAlign='center';ctx.font='bold 13px sans-serif';
+    ctx.fillText('LEVEL '+s.level,w/2,h/2);
+  }
+  if(s.dead){
+    ctx.fillStyle='rgba(0,0,0,.34)';ctx.fillRect(0,0,w,h);
+    ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='bold 13px sans-serif';
+    ctx.fillText('GAME OVER',w/2,h/2-6);
     ctx.font='10px sans-serif';
-    ctx.fillText('Tap to restart',w/2,h/2+8);
-  }else if(_dinoState.frameCount===0){
-    ctx.fillStyle=textColor;
-    ctx.globalAlpha=0.5;
-    ctx.font='10px sans-serif';
-    ctx.textAlign='center';
-    ctx.fillText('CLICK TO START',w/2,h/2);
-    ctx.globalAlpha=1;
+    ctx.fillText('Score '+s.score+' · Lv '+s.level,w/2,h/2+9);
+    ctx.globalAlpha=.85;ctx.fillText('Tap / Space to retry',w/2,h/2+23);ctx.globalAlpha=1;
+  }else if(!s.started){
+    ctx.fillStyle=textColor;ctx.globalAlpha=.62;ctx.textAlign='center';ctx.font='bold 10px sans-serif';
+    ctx.fillText('TAP or SPACE to start',w/2,h/2-4);
+    ctx.globalAlpha=.4;ctx.font='9px sans-serif';
+    ctx.fillText('again mid-air = double jump',w/2,h/2+10);ctx.globalAlpha=1;
   }
   if(_gameOn)_dinoRaf=requestAnimationFrame(dinoLoop);
+  else _dinoRaf=null;
 }
 
 function applyAllFontPaints(){
@@ -4866,11 +4847,16 @@ let _customCats=[];
 function loadCustomCats(){return JSON.parse(localStorage.getItem(CUSTOM_CATS_KEY)||'[]');}
 function saveCustomCats(){localStorage.setItem(CUSTOM_CATS_KEY,JSON.stringify(_customCats));}
 
+function defaultEmptyRows(){
+  return ['8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM']
+    .map(t=>({t:t,s:[null,null,null,null,null,null,null]}));
+}
 function openEditor(){
   // Exit resize/font-paint modes if active
   if(_rsMode)toggleResizeMode();
   if(typeof _fpMode!=='undefined'&&_fpMode)toggleFontPaintMode();
   _editorRows=getCurrentSched().map(r=>({t:r.t,s:r.s.map(c=>c?[c[0],c[1]]:null)}));
+  if(!_editorRows.length)_editorRows=defaultEmptyRows();
   _sedSelRi=-1;_sedSelCi=-1;
   _sedUndoStack=[];if(typeof _sedUpdateUndoBtn==='function')_sedUpdateUndoBtn();
   _customCats=loadCustomCats();
