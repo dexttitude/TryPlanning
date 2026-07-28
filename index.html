@@ -2140,16 +2140,16 @@ td.schedule-cell:hover .cell-hover-tip{opacity:1;}
 @keyframes logoFloat{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-3px) rotate(2deg)}}
 .tp-logo-opt{border-radius:10px;padding:8px;cursor:pointer;border:2.5px solid transparent;transition:all .2s;display:flex;align-items:center;justify-content:center;background:var(--bg);}
 .modal-logo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;}
-.modal-mark-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;}
+.modal-mark-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(42px,1fr));gap:6px;margin-top:10px;}
 .logo-opt-mark svg{width:100%;height:100%;display:block;}
-.logo-opt{display:flex;flex-direction:column;align-items:center;gap:7px;padding:11px 6px;border-radius:12px;border:2px solid transparent;background:var(--bg);cursor:pointer;font:inherit;transition:border-color .18s,transform .18s,background .18s;}
+.logo-opt{display:block;padding:3px;border-radius:11px;border:2px solid transparent;background:var(--bg);cursor:pointer;font:inherit;transition:border-color .18s,transform .18s,background .18s;}
 .logo-opt:hover{transform:translateY(-2px);border-color:var(--card-border);}
 .logo-opt.sel{border-color:var(--accent);background:var(--accent-bg);}
-.logo-opt-mark{width:40px;height:40px;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fff;box-shadow:0 1px 4px rgba(33,29,23,.14);}
+.logo-opt-mark{width:100%;aspect-ratio:1;border-radius:9px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fff;box-shadow:0 1px 4px rgba(33,29,23,.14);}
 .logo-opt-mark.empty{background:transparent;border:1.5px dashed var(--card-border);box-shadow:none;}
 .logo-opt-mark img{width:100%;height:100%;object-fit:cover;display:block;}
 .logo-opt-glyph{font-size:20px;color:var(--text-subtle);line-height:1;}
-.logo-opt-lbl{font-size:10.5px;font-weight:700;color:var(--text-muted);letter-spacing:.2px;}
+.logo-opt-lbl{display:none;}
 .logo-opt.sel .logo-opt-lbl{color:var(--accent);}
 .logo-size-row{display:flex;align-items:center;gap:12px;margin-top:13px;}
 .logo-size-row span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);}
@@ -2469,8 +2469,89 @@ body.aes-clean .min-panel.min-closing{animation:minShrinkOut .26s cubic-bezier(.
 body.aes-clean .min-fab-btn.active{background:#1a1a1a!important;color:#fff!important;border-color:#1a1a1a!important;transform:translateY(-1px);}
 @media(max-width:520px){.pd-name{font-size:14px}.preview-dock{bottom:12px}}
 </style>
+<style id="tpAdaptive">
+/* Safe-area + adaptive gutters. viewport-fit=cover pushes content INTO the notch,
+   so every edge must be padded back out with env() or the header sits under it. */
+:root{--tp-gut:clamp(14px,3vw,34px);--sa-t:env(safe-area-inset-top,0px);--sa-r:env(safe-area-inset-right,0px);--sa-b:env(safe-area-inset-bottom,0px);--sa-l:env(safe-area-inset-left,0px);}
+body{padding-top:max(var(--sa-t),18px)!important;padding-right:max(var(--sa-r),var(--tp-gut))!important;padding-bottom:max(var(--sa-b),44px)!important;padding-left:max(var(--sa-l),var(--tp-gut))!important;min-height:100dvh;}
+/* Keep the app readable rather than stretched on large Mac/Windows displays */
+@media(min-width:1500px){body{max-width:1560px;margin-inline:auto;}}
+/* Small phones (iPhone 12 mini / SE) — tighter but still equal on both sides */
+@media(max-width:400px){:root{--tp-gut:11px;}}
+@media(min-width:401px) and (max-width:640px){:root{--tp-gut:14px;}}
+/* Full-screen overlays must clear the notch and the home indicator too */
+.tp-ov,.modal-overlay,.onboard-overlay,.tp-ih{padding-top:max(var(--sa-t),12px);padding-bottom:max(var(--sa-b),12px);padding-left:max(var(--sa-l),10px);padding-right:max(var(--sa-r),10px);}
+.tp-upd{bottom:calc(18px + var(--sa-b));}
+/* Landscape notch (iPhone rotated) — the inset moves to the sides */
+@media(orientation:landscape){.top-bar{padding-left:0;padding-right:0;}}
+
+/* ── Performance: 'perf-lite' is set on low-power / mobile devices before first paint.
+   The flicker on Android was continuous GPU recompositing of full-screen blurred and
+   animated layers, which also degrades over time as the compositor thrashes. ── */
+body.perf-lite #lqLightField{display:none!important;}
+body.perf-lite::before,body.perf-lite::after{animation:none!important;}
+body.perf-lite .owner-name,body.perf-lite .avatar-badge,body.perf-lite .header h1,
+body.perf-lite .today-card,body.perf-lite .stats-bar,body.perf-lite .today-strip,
+body.perf-lite .notes-card,body.perf-lite .field-trips-card,body.perf-lite .xp-bar-fill,
+body.perf-lite .progress-bar,body.perf-lite .title-text{animation:none!important;}
+body.perf-lite .nl-mv-a,body.perf-lite .nl-mv-b{display:none!important;}
+body.perf-lite .nl-orb::after{animation:none!important;}
+/* backdrop-filter is the single most expensive thing here on mid-range Android */
+body.perf-lite .table-wrapper,body.perf-lite .modal-box,body.perf-lite .ios-popup,
+body.perf-lite .modal-content,body.perf-lite .tp-ih-card,body.perf-lite .tp-upd,
+body.perf-lite .xp-bar-inner,body.perf-lite .daily-challenge{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+body.perf-lite *{will-change:auto!important;}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;}
+  #lqLightField{display:none!important;}
+}
+
+/* ── Splash ── */
+#tpSplash{position:fixed;inset:0;z-index:100000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#fdfcfa;transition:opacity .42s ease,visibility .42s;}
+#tpSplash.tp-splash-out{opacity:0;visibility:hidden;pointer-events:none;}
+#tpSplash img{width:96px;height:96px;border-radius:27px;background:#fff;object-fit:cover;box-shadow:0 18px 40px -14px rgba(33,29,23,.45);animation:tpSplashPop .62s cubic-bezier(.2,1,.3,1) both;}
+#tpSplash .tps-name{font-family:var(--font-display),'Hanken Grotesk',-apple-system,sans-serif;font-size:19px;font-weight:700;letter-spacing:-.2px;color:#211d17;animation:tpSplashFade .5s ease .16s both;}
+#tpSplash .tps-bar{width:104px;height:3px;border-radius:3px;background:rgba(33,29,23,.10);overflow:hidden;animation:tpSplashFade .5s ease .24s both;}
+#tpSplash .tps-bar i{display:block;height:100%;width:40%;border-radius:3px;background:#7c3aed;animation:tpSplashSlide 1.05s ease-in-out infinite;}
+@keyframes tpSplashPop{0%{transform:scale(.82);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes tpSplashFade{0%{opacity:0;transform:translateY(5px)}100%{opacity:1;transform:none}}
+@keyframes tpSplashSlide{0%{transform:translateX(-105%)}100%{transform:translateX(320%)}}
+@media(prefers-color-scheme:dark){#tpSplash{background:#14120f;}#tpSplash .tps-name{color:#f5f2ec;}#tpSplash .tps-bar{background:rgba(255,255,255,.12);}}
+</style>
 </head>
 <body>
+<div id="tpSplash" role="status" aria-label="Loading TryPlanning">
+<img src="icon-192.png" alt="" width="96" height="96">
+<div class="tps-name">TryPlanning</div>
+<div class="tps-bar"><i></i></div>
+</div>
+<script>
+/* Runs before first paint so heavy effects never get a chance to composite on weak GPUs */
+(function(){
+  try{
+    var m=matchMedia,coarse=m&&m('(hover:none) and (pointer:coarse)').matches;
+    var small=Math.min(innerWidth,innerHeight)<=820;
+    var mem=navigator.deviceMemory||navigator.hardwareConcurrency||8;
+    var lite=localStorage.getItem('dv_perf');
+    if(lite===null)lite=(coarse&&small)||mem<=4?'1':'0';
+    if(lite==='1')document.body.classList.add('perf-lite');
+  }catch(e){}
+})();
+/* Splash: hide once the app has painted, with a hard timeout so a slow script can never trap it */
+(function(){
+  var gone=false;
+  function hide(){
+    if(gone)return;gone=true;
+    var s=document.getElementById('tpSplash');if(!s)return;
+    s.classList.add('tp-splash-out');
+    setTimeout(function(){if(s&&s.parentNode)s.parentNode.removeChild(s);},520);
+  }
+  window.tpHideSplash=hide;
+  if(document.readyState==='complete')setTimeout(hide,420);
+  else window.addEventListener('load',function(){setTimeout(hide,420);});
+  setTimeout(hide,2600);
+})();
+</script>
 <template id="__bundler_thumbnail" data-bg-color="#6d4ae3">
 <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
 <rect width="1200" height="800" fill="#6d4ae3"/>
@@ -2900,6 +2981,7 @@ body.aes-clean .min-fab-btn.active{background:#1a1a1a!important;color:#fff!impor
         <label class="cust-tool-btn" style="text-align:center;cursor:pointer;">
           Import<input type="file" accept=".json" onchange="importAllData(event)" style="display:none;">
         </label>
+        <button onclick="togglePerfLite()" class="cust-tool-btn" id="perfBtn">Effects: Full</button>
         <button onclick="tpInstall()" class="cust-tool-btn" id="installBtn">Install app</button>
         <button onclick="checkForUpdate()" class="cust-tool-btn" id="updateBtn">Update</button>
         <div class="cust-tool-btn" style="display:flex;align-items:center;justify-content:center;gap:7px;cursor:default;">
@@ -6084,7 +6166,7 @@ function onLogoFilePick(e){
 }
 
 // ── PWA / INSTALL ──
-window.TP_VERSION='2026.07.28.9';
+window.TP_VERSION='2026.07.29.3';
 var _swReg=null,_bip=null,_swSwapping=false;
 
 function _swSupported(){
@@ -6193,8 +6275,18 @@ async function tpInstall(){
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_bip=e;tpSyncInstallBtn();});
 window.addEventListener('appinstalled',()=>{_bip=null;tpSyncInstallBtn();_dvToast('Installed — open it from your Dock or Home Screen');});
 
+function setPerfLite(on){
+  localStorage.setItem('dv_perf',on?'1':'0');
+  document.body.classList.toggle('perf-lite',!!on);
+  const b=document.getElementById('perfBtn');
+  if(b)b.textContent=on?'Effects: Lite':'Effects: Full';
+}
+function togglePerfLite(){setPerfLite(!document.body.classList.contains('perf-lite'));}
+
 function setupPWA(){
   renderMark();
+  const pb=document.getElementById('perfBtn');
+  if(pb)pb.textContent=document.body.classList.contains('perf-lite')?'Effects: Lite':'Effects: Full';
   tpSyncInstallBtn();
   const vl=document.getElementById('appVersionLabel');
   if(vl)vl.textContent='v'+TP_VERSION;
