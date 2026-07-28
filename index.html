@@ -181,6 +181,9 @@ table{width:100%;border-collapse:collapse;min-width:820px;table-layout:fixed;}
 /* ── Now-line (current time) ── */
 .nl{position:absolute;left:0;right:0;height:0;z-index:7;pointer-events:none;will-change:top;transition:top .5s cubic-bezier(.4,0,.2,1);}
 .nl.nl-hidden{display:none;}
+/* Outside the scheduled day — pinned to the top or bottom edge, dimmed so it doesn't read as a real position */
+.nl.nl-out{opacity:.4;}
+.nl.nl-out .nl-mv{animation:none;opacity:0;}
 .nl.nl-nosnap .nl-tick-l,.nl.nl-nosnap .nl-tick-r{transition:none;}
 .nl-track{position:absolute;left:var(--nl-tw,64px);right:0;top:-1px;height:2px;border-radius:2px;z-index:1;background:linear-gradient(90deg,rgba(255,59,59,.6),rgba(255,90,90,.34) 60%,rgba(255,90,90,.08));}
 .nl-orb{position:absolute;left:calc(var(--nl-tw,64px) - 4.5px);top:-4.5px;width:9px;height:9px;border-radius:50%;background:#ff3b3b;box-shadow:0 0 0 3px rgba(255,45,45,.18),0 0 10px rgba(255,45,45,.6);z-index:2;}
@@ -2136,6 +2139,21 @@ td.schedule-cell:hover .cell-hover-tip{opacity:1;}
 @keyframes progressPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25)}}
 @keyframes logoFloat{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-3px) rotate(2deg)}}
 .tp-logo-opt{border-radius:10px;padding:8px;cursor:pointer;border:2.5px solid transparent;transition:all .2s;display:flex;align-items:center;justify-content:center;background:var(--bg);}
+.modal-logo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;}
+.modal-mark-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;}
+.logo-opt-mark svg{width:100%;height:100%;display:block;}
+.logo-opt{display:flex;flex-direction:column;align-items:center;gap:7px;padding:11px 6px;border-radius:12px;border:2px solid transparent;background:var(--bg);cursor:pointer;font:inherit;transition:border-color .18s,transform .18s,background .18s;}
+.logo-opt:hover{transform:translateY(-2px);border-color:var(--card-border);}
+.logo-opt.sel{border-color:var(--accent);background:var(--accent-bg);}
+.logo-opt-mark{width:40px;height:40px;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fff;box-shadow:0 1px 4px rgba(33,29,23,.14);}
+.logo-opt-mark.empty{background:transparent;border:1.5px dashed var(--card-border);box-shadow:none;}
+.logo-opt-mark img{width:100%;height:100%;object-fit:cover;display:block;}
+.logo-opt-glyph{font-size:20px;color:var(--text-subtle);line-height:1;}
+.logo-opt-lbl{font-size:10.5px;font-weight:700;color:var(--text-muted);letter-spacing:.2px;}
+.logo-opt.sel .logo-opt-lbl{color:var(--accent);}
+.logo-size-row{display:flex;align-items:center;gap:12px;margin-top:13px;}
+.logo-size-row span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);}
+.logo-size-row input{flex:1;}
 .tp-logo-opt:hover{border-color:var(--accent);transform:scale(1.08);}
 .tp-logo-opt.selected{border-color:var(--accent);background:var(--accent-bg);}
 body.aes-glass .progress-bar{animation:progressPulse 3s ease-in-out infinite;}
@@ -2151,7 +2169,6 @@ td.schedule-cell.just-undone{animation:cellUndo .3s ease;}
 /* ── Premium skin ── */
 .ah-left{display:flex;align-items:center;gap:14px;min-width:0;flex:1 1 auto;}
 .h1-row{display:flex;align-items:center;gap:10px;min-width:0;}
-#tpLogo{margin-bottom:0!important;}
 .owner-name{color:var(--accent);}
 .main-grid{display:grid;grid-template-columns:minmax(0,1fr) 296px;gap:16px;align-items:start;}
 .side-rail{display:flex;flex-direction:column;gap:14px;min-width:0;position:sticky;top:14px;}
@@ -2428,8 +2445,6 @@ body:not(.aes-clean) .ah-left{background:color-mix(in srgb,var(--card-bg) 62%,tr
 body:not(.aes-clean) .avatar-badge{width:64px;height:64px;border-radius:19px;}
 body:not(.aes-clean) .header{gap:5px;justify-content:center;}
 body:not(.aes-clean) .header .subtitle{margin-top:0;}
-/* Align week label under the name: drop the empty logo box so name starts at card's left edge */
-#tpLogo:empty{display:none;}
 /* No floating on header — replace drift with a subtle, static accent-glow breath on every theme */
 body.aes-cloudy .header h1,body.aes-cloudy .avatar-badge,body.aes-cloudy .header .subtitle,body.aes-pastel .avatar-badge,body.aes-space .avatar-badge,body.aes-glass .header .subtitle{animation:none!important;transform:none!important;}
 @media(prefers-reduced-motion:no-preference){body:not(.aes-clean) .avatar-badge{animation:avGlowBreath 5.5s var(--ease-soft) infinite!important;}}
@@ -2500,7 +2515,7 @@ body.aes-clean .min-fab-btn.active{background:#1a1a1a!important;color:#fff!impor
 <div class="ah-left">
 <div class="avatar-badge" id="avatarBadge" onclick="openCustomise()" title="Edit profile"></div>
 <div class="header">
-<div class="h1-row"><div id="tpLogo" onclick="openLogoPicker()" title="Change logo"></div><h1><span class="title-text"><span class="owner-name" id="ownerName">Loading…</span><span class="sched-suffix" id="schedTypeLabel">'s Schedule</span></span></h1></div>
+<div class="h1-row"><h1><span class="title-text"><span class="owner-name" id="ownerName">Loading…</span><span class="sched-suffix" id="schedTypeLabel">'s Schedule</span></span></h1></div>
 <div class="subtitle" id="weekLabel"></div>
 </div>
 </div>
@@ -2760,7 +2775,7 @@ body.aes-clean .min-fab-btn.active{background:#1a1a1a!important;color:#fff!impor
 <!-- Template Onboarding -->
 <div class="onboard-overlay hidden" id="onboardOverlay">
   <div class="onboard-card">
-    <div class="onboard-logo"><div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(150deg,#7c5bf0,#5b3bd6);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 26px -10px rgba(91,59,214,.65);"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="3" y="4.5" width="18" height="16" rx="3.5"></rect><path d="M3 9.5h18M8 2.8v3.4M16 2.8v3.4"></path><circle cx="12" cy="14.5" r="1.4" fill="#fff" stroke="none"></circle></svg></div></div>
+    <div class="onboard-logo"><img src="icon-192.png" alt="TryPlanning" width="60" height="60" style="display:block;width:60px;height:60px;border-radius:18px;background:#fff;object-fit:cover;border:1px solid rgba(33,29,23,.10);box-shadow:0 12px 26px -10px rgba(33,29,23,.42);"></div>
     <div class="onboard-title" id="onboardTitle">Welcome!</div>
     <div class="onboard-sub" id="onboardSub">Let's set up your personalised schedule.<br>Everything saves automatically in your browser.</div>
     <div class="onboard-steps"><div class="onboard-step-dot active" id="stepDot0"></div><div class="onboard-step-dot" id="stepDot1"></div><div class="onboard-step-dot" id="stepDot2"></div></div>
@@ -2795,33 +2810,13 @@ body.aes-clean .min-fab-btn.active{background:#1a1a1a!important;color:#fff!impor
   </div>
 </div>
 
-<!-- Logo Picker Modal -->
-<div id="logoPickerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:var(--card-bg);border-radius:20px;padding:24px;width:440px;max-width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);font-family:inherit;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-      <h3 style="margin:0;font-size:17px;color:var(--text);">TryPlanning Logo</h3>
-      <button onclick="closeLogoPicker()" style="border:none;background:none;font-size:22px;cursor:pointer;color:var(--text-muted);">×</button>
-    </div>
-    <div style="margin-bottom:12px;">
-      <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);">Size</label>
-      <input type="range" id="logoSizeSlider" min="24" max="56" value="36" style="width:100%;margin-top:6px;" oninput="updateLogoSize(this.value)">
-    </div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 14px;background:var(--bg);border-radius:10px;border:1px solid var(--card-border);">
-      <span style="font-size:13px;color:var(--text);flex:1;">Hide logo</span>
-      <input type="checkbox" id="logoHideCheck" onchange="toggleLogoHide(this.checked)" style="width:18px;height:18px;cursor:pointer;">
-    </div>
-    <div id="logoGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;max-height:280px;overflow-y:auto;"></div>
-    <button onclick="closeLogoPicker()" style="width:100%;padding:10px;border-radius:10px;border:none;background:var(--accent-bg);color:var(--accent);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Done</button>
-  </div>
-</div>
-
 <!-- About TryPlanning popup -->
 <div class="modal-overlay hidden" id="tpAboutModal" onclick="if(event.target===this)document.getElementById('tpAboutModal').classList.add('hidden')">
   <div class="modal-box" style="max-width:390px;padding:0;overflow:hidden;max-height:92vh;display:flex;flex-direction:column;">
     <!-- Header gradient -->
     <div style="background:linear-gradient(135deg,#4c1d95,#7c3aed,#a855f7);padding:22px 20px 16px;position:relative;flex-shrink:0;">
       <div style="display:flex;align-items:center;gap:12px;">
-        <div style="width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="3" y="4.5" width="18" height="16" rx="3.5"></rect><path d="M3 9.5h18M8 2.8v3.4M16 2.8v3.4"></path></svg></div>
+        <div style="width:44px;height:44px;border-radius:13px;background:#fff;overflow:hidden;flex-shrink:0;"><img src="icon-192.png" alt="" width="44" height="44" style="display:block;width:44px;height:44px;object-fit:cover;"></div>
         <div>
           <div style="font-size:22px;font-weight:900;color:#fff;letter-spacing:-.5px;">TryPlanning</div>
           <div id="tpAboutVersion" style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px;font-family:monospace;letter-spacing:.3px;"></div>
@@ -2877,8 +2872,9 @@ body.aes-clean .min-fab-btn.active{background:#1a1a1a!important;color:#fff!impor
     </div>
     <div class="modal-divider"></div>
     <div class="modal-section">
-      <label class="modal-label">Avatar</label>
-      <div class="modal-av-grid" id="customiseAvGrid"></div>
+      <label class="modal-label">Profile</label>
+      <div class="modal-mark-grid" id="customiseMarkGrid"></div>
+      <input type="file" id="logoFileInput" accept="image/*" style="display:none;" onchange="onLogoFilePick(event)">
     </div>
     </div>
     <div class="cust-pane" id="custPaneLooks">
@@ -3347,7 +3343,32 @@ function formatMeta12h(t){if(!t)return'';const[h,m]=t.split(':').map(Number);con
 // Robust time parsing/formatting for the schedule editor popup
 function fmt12(hhmm){if(!hhmm)return'';const p=String(hhmm).split(':');const h=parseInt(p[0],10),m=parseInt(p[1]||'0',10);if(isNaN(h))return'';const ap=h>=12?'PM':'AM';const h12=h%12||12;return h12+':'+String(isNaN(m)?0:m).padStart(2,'0')+' '+ap;}
 function hmToMin(hhmm){if(!hhmm)return null;const p=String(hhmm).split(':');const h=parseInt(p[0],10),m=parseInt(p[1]||'0',10);if(isNaN(h))return null;return h*60+(isNaN(m)?0:m);}
-function rowStartMin(label){if(!label)return null;const s=String(label).toLowerCase();const m=s.match(/(\d{1,2})(?::(\d{2}))?/);if(!m)return null;let h=parseInt(m[1],10),min=m[2]?parseInt(m[2],10):0;const mer=s.match(/([ap])m/);if(mer){if(mer[1]==='p'&&h<12)h+=12;else if(mer[1]==='a'&&h===12)h=0;}return h*60+min;}
+// Parses a row label like "11 – 12 PM" or "8 – 9 AM" into the START time in minutes.
+// The meridiem in a range label belongs to the END hour, not the start — reading "11 – 12 PM"
+// as 11 PM was throwing the now-line to the wrong end of the day.
+function rowStartMin(label){
+  if(!label)return null;
+  const s=String(label).toLowerCase();
+  const nums=s.match(/\d{1,2}(?::\d{2})?/g);
+  if(!nums||!nums.length)return null;
+  const mers=s.match(/[ap](?=m)/g)||[];
+  const to24=(h,mer)=>mer==='p'?(h<12?h+12:h):(mer==='a'?(h===12?0:h):h);
+  const parse=t=>{const p=t.split(':');return{h:parseInt(p[0],10),m:p[1]?parseInt(p[1],10):0};};
+  const st=parse(nums[0]);
+  if(isNaN(st.h))return null;
+  // Explicit meridiem on both ends — the first one is the start's
+  if(mers.length>=2)return to24(st.h,mers[0])*60+st.m;
+  // One meridiem across a range: it labels the end. Infer the start's half-day.
+  if(mers.length===1&&nums.length>=2){
+    const en=parse(nums[1]);
+    const endMin=to24(en.h,mers[0])*60+en.m;
+    let cand=to24(st.h,mers[0])*60+st.m;
+    if(cand>=endMin)cand=to24(st.h,mers[0]==='p'?'a':'p')*60+st.m;
+    return cand;
+  }
+  if(mers.length===1)return to24(st.h,mers[0])*60+st.m;
+  return st.h*60+st.m;
+}
 function parseTimeInput(raw,defMer){
   if(raw==null)return'';raw=String(raw).trim().toLowerCase();if(!raw)return'';
   let mer=/p/.test(raw)?'pm':(/a/.test(raw)?'am':null);
@@ -3446,7 +3467,7 @@ function applyAesthetic(id){
 function getAvatarSvg(id){const av=AVATARS.find(a=>a.id===id)||AVATARS[0];return av.svg;}
 function updateHeader(name,avatarId,themeId){
   document.getElementById("ownerName").textContent=name;
-  document.getElementById("avatarBadge").innerHTML=getAvatarSvg(avatarId);
+  renderMark();
   document.getElementById("printName").textContent=name+"'s TryPlanning";
   applyTheme(themeId);
   applyAesthetic(loadAesId());
@@ -3629,9 +3650,9 @@ function openCustomise(){
   SFX.modalOpen();
   _cAv=loadAvatarId();_cTheme=loadThemeId();_cAes=loadAesId();
   document.getElementById("customiseName").value=loadName();
-  buildAvGrid("customiseAvGrid","modal-av-opt",_cAv,id=>{_cAv=id;});
   _cAesOrig=_cAes;_cThemeOrig=_cTheme;
   refreshCustomiseGrids();
+  buildMarkGrid();
   const ytToggle=document.getElementById("ytEnabledToggle");
   if(ytToggle)ytToggle.checked=localStorage.getItem(YT_KEY)==='1';
   custShowTab('Profile');
@@ -5985,8 +6006,85 @@ function checkAllDoneToday(){
   }
 }
 
+// ── PROFILE MARK ──
+// Avatar and header logo used to be two separate pickers setting two separate things.
+// They're now one choice: pick an avatar, the house, or your own picture, and it's used
+// for both the profile badge and the header mark.
+const TP_ICON='icon-192.png';
+function markId(){return localStorage.getItem('dv_mark')||('av:'+loadAvatarId());}
+function logoCustom(){return localStorage.getItem('dv_logo_custom')||'';}
+function fitMarkImg(el){const im=el.querySelector('img');if(im)im.setAttribute('style','width:100%;height:100%;object-fit:cover;display:block;');}
+
+function markHTML(id){
+  if(id==='house')return '<img src="'+TP_ICON+'" alt="TryPlanning">';
+  if(id==='custom'){const c=logoCustom();return c?'<img src="'+c+'" alt="">':'';}
+  if(id&&id.indexOf('av:')===0)return getAvatarSvg(id.slice(3));
+  return '';
+}
+function renderMark(){
+  const badge=document.getElementById('avatarBadge');if(!badge)return;
+  badge.innerHTML=markHTML(markId())||getAvatarSvg(loadAvatarId());
+  fitMarkImg(badge);
+}
+function buildMarkGrid(){
+  const g=document.getElementById('customiseMarkGrid');if(!g)return;
+  const cur=markId();g.innerHTML='';
+  const opts=AVATARS.map(av=>({id:'av:'+av.id,label:av.label||av.id}));
+  opts.push({id:'house',label:'House'},{id:'custom',label:'Custom'});
+  opts.forEach(o=>{
+    const btn=document.createElement('button');
+    btn.type='button';btn.className='logo-opt'+(cur===o.id?' sel':'');
+    btn.title=o.id==='custom'?'Use your own picture':o.label;
+    let inner='',empty=false;
+    if(o.id==='custom'){
+      const c=logoCustom();
+      if(c)inner='<img src="'+c+'" alt="">';else{inner='<span class="logo-opt-glyph">+</span>';empty=true;}
+    }else inner=markHTML(o.id);
+    btn.innerHTML='<span class="logo-opt-mark'+(empty?' empty':'')+'">'+inner+'</span><span class="logo-opt-lbl">'+o.label+'</span>';
+    btn.addEventListener('click',()=>pickMark(o.id));
+    g.appendChild(btn);
+  });
+}
+function pickMark(id){
+  // Tapping Custom always opens the picker — that's also how you swap the picture later
+  if(id==='custom'&&(!logoCustom()||markId()==='custom')){
+    const fi=document.getElementById('logoFileInput');if(fi)fi.click();
+    return;
+  }
+  localStorage.setItem('dv_mark',id);
+  if(id.indexOf('av:')===0){const av=id.slice(3);saveAvatarId(av);if(typeof _cAv!=='undefined')_cAv=av;}
+  renderMark();buildMarkGrid();
+}
+function onLogoFilePick(e){
+  const f=e.target.files&&e.target.files[0];
+  e.target.value='';
+  if(!f)return;
+  const fr=new FileReader();
+  fr.onload=()=>{
+    const img=new Image();
+    img.onload=()=>{
+      // Centre-crop to a 192px square so it stays small enough for localStorage
+      const N=192,c=document.createElement('canvas');c.width=N;c.height=N;
+      const ctx=c.getContext('2d');
+      ctx.fillStyle='#fff';ctx.fillRect(0,0,N,N);
+      ctx.imageSmoothingQuality='high';
+      const sc=Math.max(N/img.width,N/img.height),dw=img.width*sc,dh=img.height*sc;
+      ctx.drawImage(img,(N-dw)/2,(N-dh)/2,dw,dh);
+      try{
+        localStorage.setItem('dv_logo_custom',c.toDataURL('image/jpeg',.86));
+        localStorage.setItem('dv_mark','custom');
+      }catch(err){_dvToast('That picture is too big to save');return;}
+      renderMark();buildMarkGrid();_dvToast('Profile picture updated');
+    };
+    img.onerror=()=>_dvToast("Couldn't read that picture");
+    img.src=fr.result;
+  };
+  fr.onerror=()=>_dvToast("Couldn't read that file");
+  fr.readAsDataURL(f);
+}
+
 // ── PWA / INSTALL ──
-window.TP_VERSION='2026.07.28.3';
+window.TP_VERSION='2026.07.28.9';
 var _swReg=null,_bip=null,_swSwapping=false;
 
 function _swSupported(){
@@ -6096,9 +6194,14 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_bip=e;tpSy
 window.addEventListener('appinstalled',()=>{_bip=null;tpSyncInstallBtn();_dvToast('Installed — open it from your Dock or Home Screen');});
 
 function setupPWA(){
+  renderMark();
   tpSyncInstallBtn();
   const vl=document.getElementById('appVersionLabel');
   if(vl)vl.textContent='v'+TP_VERSION;
+  const av=document.getElementById('tpAboutVersion');
+  if(av)av.textContent='v'+TP_VERSION;
+  const vb=document.getElementById('tpVersionBadge');
+  if(vb)vb.textContent='v'+TP_VERSION;
   if(!_swSupported())return;
   navigator.serviceWorker.register('sw.js',{scope:'./'}).then(reg=>{
     _swReg=reg;
@@ -7250,12 +7353,17 @@ if(_origApplyAes2){window.applyAesthetic=function(id){_origApplyAes2(id);applyAl
       var rows=[].slice.call(tbody.children).filter(function(tr){return tr.querySelector&&tr.querySelector('.time-cell');}).map(function(tr){return{tr:tr,min:rowStartMin(tr.querySelector('.time-cell').textContent)};}).filter(function(r){return r.min!=null;});
       if(!rows.length){el.classList.add('nl-hidden');return;}
       var now=new Date(),nowMin=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
+      var domRows=rows.slice();// clamp to on-screen order, not chronological — labels can repeat or run out of order
       rows.sort(function(a,b){return a.min-b.min;});rows=rows.filter(function(r,i){return i===0||r.min!==rows[i-1].min;});
       var first=rows[0].min,lastGap=rows.length>1?Math.max(15,rows[rows.length-1].min-rows[rows.length-2].min):60,endB=rows[rows.length-1].min+lastGap;
-      if(nowMin<first||nowMin>endB){el.classList.add('nl-hidden');return;}
+      var outside=nowMin<first?'before':(nowMin>endB?'after':null);
       var wrapRect=wrap.getBoundingClientRect();function topOf(tr){return tr.getBoundingClientRect().top-wrapRect.top+wrap.scrollTop;}function botOf(tr){return tr.getBoundingClientRect().bottom-wrapRect.top+wrap.scrollTop;}
-      var top=null;for(var i=0;i<rows.length;i++){var segStart=rows[i].min,segEnd=(i<rows.length-1)?rows[i+1].min:endB;if(nowMin>=segStart&&nowMin<segEnd){var frac=(segEnd>segStart)?(nowMin-segStart)/(segEnd-segStart):0;var a=topOf(rows[i].tr),b=(i<rows.length-1)?topOf(rows[i+1].tr):botOf(rows[i].tr);top=a+frac*(b-a);break;}}
+      var top=null;
+      if(outside==='before')top=topOf(domRows[0].tr);
+      else if(outside==='after')top=botOf(domRows[domRows.length-1].tr);
+      else for(var i=0;i<rows.length;i++){var segStart=rows[i].min,segEnd=(i<rows.length-1)?rows[i+1].min:endB;if(nowMin>=segStart&&nowMin<segEnd){var frac=(segEnd>segStart)?(nowMin-segStart)/(segEnd-segStart):0;var a=topOf(rows[i].tr),b=(i<rows.length-1)?topOf(rows[i+1].tr):botOf(rows[i].tr);top=a+frac*(b-a);break;}}
       if(top==null){el.classList.add('nl-hidden');return;}
+      el.classList.toggle('nl-out',!!outside);
       var tc=tbody.querySelector('.time-cell'),tw=tc?tc.getBoundingClientRect().width:64;el.style.setProperty('--nl-tw',tw+'px');el.style.top=top+'px';
       var fm=Math.floor(nowMin);mins.querySelector('.nlm-up').textContent=p2(((fm-1)%60+60)%60);mins.querySelector('.nlm-dn').textContent=p2((fm+1)%60);el.classList.remove('nl-hidden');}
     return{update:update};})();
