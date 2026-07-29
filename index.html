@@ -2488,6 +2488,29 @@ body{padding-top:calc(var(--sa-t) + var(--tp-gut))!important;padding-right:calc(
 /* Landscape notch (iPhone rotated) — the inset moves to the sides */
 @media(orientation:landscape){.top-bar{padding-left:0;padding-right:0;}}
 
+/* ── Wide desktop layout (≥1500px): Today + stats move into a sticky left column ── */
+.desk-col{display:none;}
+.main-grid.wide-3{grid-template-columns:274px minmax(0,1fr) 296px;}
+.main-grid.wide-3 .desk-col{display:flex;flex-direction:column;gap:14px;min-width:0;position:sticky;top:14px;align-self:start;}
+.main-grid.wide-3 .desk-col .today-strip,.main-grid.wide-3 .desk-col .stats-bar{margin-bottom:0;}
+.main-grid.wide-3 .desk-col .today-strip-header{flex-direction:column;align-items:flex-start;gap:3px;margin-bottom:10px;}
+.main-grid.wide-3 .desk-col .today-cards{flex-direction:column;overflow-x:visible;overflow-y:auto;max-height:46vh;gap:7px;padding-right:2px;}
+.main-grid.wide-3 .desk-col .today-card{min-width:0;max-width:none;width:100%;flex-shrink:1;}
+.main-grid.wide-3 .desk-col .stats-row{display:grid;grid-template-columns:1fr 1fr;gap:0;row-gap:14px;}
+.main-grid.wide-3 .desk-col .stat-value{font-size:22px;}
+.main-grid.wide-3 .desk-col .progress-container{margin-bottom:0;}
+@media(max-width:1499px){
+  .main-grid.wide-3{grid-template-columns:minmax(0,1fr) 296px;}
+  .main-grid.wide-3 .desk-col{display:flex;flex-direction:column;gap:14px;grid-column:1/-1;position:static;}
+  .main-grid.wide-3 .desk-col .today-strip-header{flex-direction:row;align-items:center;}
+  .main-grid.wide-3 .desk-col .today-cards{flex-direction:row;overflow-x:auto;max-height:none;gap:8px;}
+  .main-grid.wide-3 .desk-col .today-card{min-width:110px;max-width:130px;flex-shrink:0;}
+  .main-grid.wide-3 .desk-col .stats-row{display:flex;gap:34px;}
+}
+
+/* Running inside the bundled Mac app (file://) — no service worker, so hide web-only actions */
+body.tp-native #installBtn,body.tp-native #updateBtn{display:none!important;}
+
 /* ── Performance: 'perf-lite' is set on low-power / mobile devices before first paint.
    The flicker on Android was continuous GPU recompositing of full-screen blurred and
    animated layers, which also degrades over time as the compositor thrashes. ── */
@@ -2593,6 +2616,7 @@ button,.btn,.cust-tool-btn,.sed-cell,.sed-chip,td,.tfmt-btn,.logo-opt,.modal-av-
     var lite=localStorage.getItem('dv_perf');
     if(lite===null)lite=weak?'1':'0';
     if(lite==='1')document.body.classList.add('perf-lite');
+    if(location.protocol==='file:')document.body.classList.add('tp-native');
   }catch(e){}
 })();
 /* Splash: hide once the app has painted, with a hard timeout so a slow script can never trap it */
@@ -2778,6 +2802,7 @@ button,.btn,.cust-tool-btn,.sed-cell,.sed-chip,td,.tfmt-btn,.logo-opt,.modal-av-
 </div>
 
 <div class="main-grid">
+<div class="desk-col" id="deskCol"></div>
 <div class="table-wrapper">
   <table>
     <thead><tr>
@@ -3070,6 +3095,7 @@ button,.btn,.cust-tool-btn,.sed-cell,.sed-chip,td,.tfmt-btn,.logo-opt,.modal-av-
           Import<input type="file" accept=".json" onchange="importAllData(event)" style="display:none;">
         </label>
         <button onclick="togglePerfLite()" class="cust-tool-btn" id="perfBtn">Effects: Full</button>
+        <button onclick="toggleWideLayout()" class="cust-tool-btn" id="layoutBtn">Layout: Wide</button>
         <button onclick="tpInstall()" class="cust-tool-btn" id="installBtn">Install app</button>
         <button onclick="checkForUpdate()" class="cust-tool-btn" id="updateBtn">Update</button>
         <div class="cust-tool-btn" style="display:flex;align-items:center;justify-content:center;gap:7px;cursor:default;">
@@ -6254,7 +6280,7 @@ function onLogoFilePick(e){
 }
 
 // ── PWA / INSTALL ──
-window.TP_VERSION='2026.07.29.11';
+window.TP_VERSION='2026.07.29.12';
 var _swReg=null,_bip=null,_swSwapping=false;
 
 function _swSupported(){
@@ -6370,6 +6396,29 @@ function setPerfLite(on){
   if(b)b.textContent=on?'Effects: Lite':'Effects: Full';
 }
 function togglePerfLite(){setPerfLite(!document.body.classList.contains('perf-lite'));}
+
+// ── Wide desktop layout: on roomy screens Today + stats become a sticky left column
+// so the week table gets the full height of the viewport instead of being pushed down.
+function tpWideEnabled(){try{return localStorage.getItem('dv_wide')!=='0';}catch(e){return true;}}
+function applyWideLayout(){
+  const mg=document.querySelector('.main-grid'),dc=document.getElementById('deskCol');
+  const ts=document.querySelector('.today-strip'),sc=document.getElementById('statsCard');
+  if(!mg||!dc||!ts||!sc)return;
+  const on=tpWideEnabled()&&window.innerWidth>=1500;
+  if(on){
+    if(ts.parentNode!==dc){dc.appendChild(ts);dc.appendChild(sc);}
+    mg.classList.add('wide-3');
+  }else{
+    if(ts.parentNode===dc){mg.parentNode.insertBefore(ts,mg);mg.parentNode.insertBefore(sc,mg);}
+    mg.classList.remove('wide-3');
+  }
+  const b=document.getElementById('layoutBtn');
+  if(b)b.textContent=tpWideEnabled()?'Layout: Wide':'Layout: Stacked';
+}
+function toggleWideLayout(){try{localStorage.setItem('dv_wide',tpWideEnabled()?'0':'1');}catch(e){}applyWideLayout();_dvToast(tpWideEnabled()?'Wide layout on':'Stacked layout on');}
+let _wideT=null;
+window.addEventListener('resize',()=>{clearTimeout(_wideT);_wideT=setTimeout(applyWideLayout,120);});
+applyWideLayout();
 
 function setupPWA(){
   renderMark();

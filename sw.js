@@ -1,7 +1,7 @@
 /* TryPlanning service worker.
    Bump SW_VERSION on every deploy — that byte change is what makes browsers
    notice a new release. HTML is network-first so an update always lands. */
-const SW_VERSION='2026.07.29.11';
+const SW_VERSION='2026.07.29.12';
 const CACHE='tp-v'+SW_VERSION;
 const SHELL=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-maskable-512.png','./apple-touch-icon-180.png'];
 const FONT_HOSTS=['fonts.googleapis.com','fonts.gstatic.com'];
