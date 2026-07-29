@@ -183,28 +183,31 @@ table{width:100%;border-collapse:collapse;min-width:820px;table-layout:fixed;}
 .nl.nl-hidden{display:none;}
 /* Outside the scheduled day — pinned to the top or bottom edge, dimmed so it doesn't read as a real position */
 .nl.nl-out{opacity:.4;}
-.nl.nl-out .nl-mv{animation:none;opacity:0;}
+
 .nl.nl-nosnap .nl-tick-l,.nl.nl-nosnap .nl-tick-r{transition:none;}
 .nl-track{position:absolute;left:var(--nl-tw,64px);right:0;top:-1px;height:2px;border-radius:2px;z-index:1;background:linear-gradient(90deg,rgba(255,59,59,.6),rgba(255,90,90,.34) 60%,rgba(255,90,90,.08));}
 .nl-orb{position:absolute;left:calc(var(--nl-tw,64px) - 4.5px);top:-4.5px;width:9px;height:9px;border-radius:50%;background:#ff3b3b;box-shadow:0 0 0 3px rgba(255,45,45,.18),0 0 10px rgba(255,45,45,.6);z-index:2;}
 .nl-orb::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:1px solid rgba(255,45,45,.5);animation:nlPulse 2.6s ease-out infinite;}
 @keyframes nlPulse{0%{transform:scale(.5);opacity:.8}70%{transform:scale(2.6);opacity:0}100%{opacity:0}}
 .nl-dot{position:absolute;left:var(--nl-tw,64px);top:0;transform:translate(-50%,-50%);width:6px;height:6px;border-radius:50%;background:#ff2d2d;box-shadow:0 0 8px rgba(255,45,45,.85);z-index:3;}
-.nl-mv{position:absolute;left:calc(var(--nl-tw,64px) + 5px);top:-1.5px;width:16px;height:3px;animation:nlTravel 1.9s cubic-bezier(.16,1,.3,1) infinite;z-index:2;will-change:transform;}
-.nl-mv-i{display:block;width:100%;height:100%;border-radius:2px;background:linear-gradient(90deg,rgba(225,29,72,0),#e11d48 16%,#ff5a3c 42%,#ffb066 66%,rgba(255,224,178,0));box-shadow:0 0 9px rgba(255,90,45,.55);will-change:transform,opacity;}
-@keyframes nlTravel{0%{transform:translateY(-17px)}44%{transform:translateY(17px)}50%{transform:translateY(17px)}94%{transform:translateY(-17px)}100%{transform:translateY(-17px)}}
-.nl-mv-a{z-index:0;}
-.nl-mv-a .nl-mv-i{animation:nlDepthBack 1.9s linear infinite;}
-.nl-mv-b{z-index:4;animation-delay:-.95s;}
-.nl-mv-b .nl-mv-i{animation:nlDepthFront 1.9s linear infinite;animation-delay:-.95s;}
-@keyframes nlDepthBack{0%{transform:scale(1);opacity:.95;filter:none}22%{transform:scale(.34);opacity:.16;filter:blur(1.4px)}44%{transform:scale(1);opacity:.95;filter:none}50%{transform:scale(1);opacity:.95;filter:none}72%{transform:scale(.34);opacity:.16;filter:blur(1.4px)}94%{transform:scale(1);opacity:.95;filter:none}100%{transform:scale(1);opacity:.95;filter:none}}
-@keyframes nlDepthFront{0%{transform:scale(1);opacity:.95;box-shadow:0 0 9px rgba(255,90,45,.55)}22%{transform:scale(1.75);opacity:1;box-shadow:0 0 16px rgba(255,120,60,.9)}44%{transform:scale(1);opacity:.95;box-shadow:0 0 9px rgba(255,90,45,.55)}50%{transform:scale(1);opacity:.95;box-shadow:0 0 9px rgba(255,90,45,.55)}72%{transform:scale(1.75);opacity:1;box-shadow:0 0 16px rgba(255,120,60,.9)}94%{transform:scale(1);opacity:.95;box-shadow:0 0 9px rgba(255,90,45,.55)}100%{transform:scale(1);opacity:.95;box-shadow:0 0 9px rgba(255,90,45,.55)}}
-@keyframes nlTravel{0%{transform:translateY(-17px)}42%{transform:translateY(17px)}50%{transform:translateY(17px)}92%{transform:translateY(-17px)}100%{transform:translateY(-17px)}}
+/* Minute readout: the long line plus the two minute numbers. Numbers roll like an
+   odometer when the minute turns — masked by overflow so they wipe in and out cleanly. */
+.nl-mins .nlm-up,.nl-mins .nlm-dn{height:10px;overflow:hidden;}
+.nl-mins .nlm-up{bottom:4px;}
+.nl-mins .nlm-dn{top:4px;}
+.nlm-v{position:absolute;left:0;right:0;top:0;display:block;line-height:10px;}
+/* (0,2,0) + !important so the Motion presets can't flatten these to .12s */
+.nl .nlm-v{transition:transform .82s cubic-bezier(.22,1,.36,1),opacity .82s ease!important;}
+.nl .nlm-v.nlm-in{transform:translateY(9px);opacity:0;}
+.nl .nlm-v.nlm-out{transform:translateY(-9px);opacity:0;}
+.table-wrapper .nl{transition:top .9s cubic-bezier(.22,1,.36,1)!important;}
+.nl .nl-orb.nl-beat{animation:nlBeat .82s cubic-bezier(.3,.9,.3,1);}
+@keyframes nlBeat{0%{transform:scale(1)}30%{transform:scale(1.5)}100%{transform:scale(1)}}1)}}
 .nl-pill{display:none;}
 .nl-mins{position:absolute;left:calc(var(--nl-tw,64px) + 5px);width:16px;top:0;height:0;font-size:8px;font-weight:800;color:#ff5a5a;font-variant-numeric:tabular-nums;opacity:.92;text-align:center;pointer-events:none;z-index:1;}
 .nl-mins .nlm-up{position:absolute;bottom:5px;left:0;right:0;}
 .nl-mins .nlm-dn{position:absolute;top:5px;left:0;right:0;}
-@media(max-width:640px){.nl-mv{width:13px;}@keyframes nlTravel{0%{transform:translateY(-15px)}44%{transform:translateY(15px)}50%{transform:translateY(15px)}94%{transform:translateY(-15px)}100%{transform:translateY(-15px)}}}
+
 /* ── Editor insights bar ── */
 .sed-insights{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 22px;background:var(--card-bg);border-bottom:1px solid var(--card-border);flex-shrink:0;font-size:11.5px;}
 .sed-ins-status{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--text-muted);min-width:0;}
@@ -2494,7 +2497,7 @@ body.perf-lite .owner-name,body.perf-lite .avatar-badge,body.perf-lite .header h
 body.perf-lite .today-card,body.perf-lite .stats-bar,body.perf-lite .today-strip,
 body.perf-lite .notes-card,body.perf-lite .field-trips-card,body.perf-lite .xp-bar-fill,
 body.perf-lite .progress-bar,body.perf-lite .title-text{animation:none!important;}
-body.perf-lite .nl-mv-a,body.perf-lite .nl-mv-b{display:none!important;}
+
 body.perf-lite .nl-orb::after{animation:none!important;}
 /* backdrop-filter is the single most expensive thing here on mid-range Android */
 body.perf-lite .table-wrapper,body.perf-lite .modal-box,body.perf-lite .ios-popup,
@@ -2537,7 +2540,9 @@ body.perf-lite *{will-change:auto!important;}
   .sed-title-block{flex:1 1 100%;order:-1;}
   .sed-head-title{font-size:16px;}
   .sed-head-sub{display:none;}
-  .sed-topbar>*:not(.sed-title-block){flex:0 0 auto;}
+  .sed-topbar>div:not(.sed-title-block){flex:1 1 100%!important;flex-wrap:wrap!important;justify-content:flex-start!important;min-width:0;row-gap:7px;}
+  .sed-topbar>div:not(.sed-title-block)>*{white-space:nowrap;}
+  .sed-add-slot,.sed-btn-undo,.sed-btn-more,.sed-btn-cancel,.sed-btn-save{padding-left:11px!important;padding-right:11px!important;font-size:12px!important;}
   .sed-insights{flex-wrap:wrap!important;row-gap:4px;align-items:flex-start!important;}
   .sed-ins-meta{flex-wrap:wrap;}
   .sed-grid-header,.sed-grid-row{min-width:720px;}
@@ -6249,7 +6254,7 @@ function onLogoFilePick(e){
 }
 
 // ── PWA / INSTALL ──
-window.TP_VERSION='2026.07.29.7';
+window.TP_VERSION='2026.07.29.11';
 var _swReg=null,_bip=null,_swSwapping=false;
 
 function _swSupported(){
@@ -7523,7 +7528,25 @@ if(_origApplyAes2){window.applyAesthetic=function(id){_origApplyAes2(id);applyAl
   function rowTimeCtx(input){return function(){var rowEl=input.closest('.sed-grid-row');var rows=[].slice.call(document.querySelectorAll('#sedGridBody .sed-grid-row'));var idx=rows.indexOf(rowEl);var after=null,dm='am';if(idx>0){var pin=rows[idx-1].querySelector('.sed-row-time input');var pv=pin?rowStartMin(pin.value):null;if(pv!=null){after=pv+60;dm=(pv%1440)>=720?'pm':'am';}}return{defMer:dm,afterMin:after};};}
   function attachRowTimeInputs(){[].forEach.call(document.querySelectorAll('#sedGridBody .sed-row-time input'),function(inp){attachSmartTime(inp,rowTimeCtx(inp));});}
   var NL=(function(){var el,mins;
-    function ensure(){var wrap=document.querySelector('.table-wrapper');if(!wrap)return null;if(el&&el.parentNode===wrap)return wrap;el=document.createElement('div');el.className='nl nl-hidden';el.innerHTML='<div class="nl-track"></div><div class="nl-mins"><span class="nlm-up"></span><span class="nlm-dn"></span></div><div class="nl-mv nl-mv-a"><i class="nl-mv-i"></i></div><div class="nl-mv nl-mv-b"><i class="nl-mv-i"></i></div><div class="nl-dot"></div>';wrap.appendChild(el);mins=el.querySelector('.nl-mins');return wrap;}
+    function ensure(){var wrap=document.querySelector('.table-wrapper');if(!wrap)return null;if(el&&el.parentNode===wrap)return wrap;el=document.createElement('div');el.className='nl nl-hidden';el.innerHTML='<div class="nl-track"></div><div class="nl-mins"><span class="nlm-up"></span><span class="nlm-dn"></span></div><div class="nl-dot"></div>';wrap.appendChild(el);mins=el.querySelector('.nl-mins');lastMin=-1;return wrap;}
+    var lastMin=-1;
+    // Odometer roll: the outgoing digit wipes up, the incoming one wipes in from below
+    function rollTo(host,val,animate){
+      if(!host||host._v===val)return;
+      var old=host.querySelector('.nlm-v');
+      var nu=document.createElement('span');
+      nu.className='nlm-v'+(animate?' nlm-in':'');
+      nu.textContent=val;
+      host.appendChild(nu);
+      if(animate){
+        requestAnimationFrame(function(){requestAnimationFrame(function(){
+          nu.classList.remove('nlm-in');
+          if(old)old.classList.add('nlm-out');
+        });});
+        if(old)setTimeout(function(){if(old.parentNode)old.parentNode.removeChild(old);},1000);
+      }else if(old&&old.parentNode)old.parentNode.removeChild(old);
+      host._v=val;
+    }
     function update(){var wrap=ensure();if(!wrap||!el)return;var tbody=document.getElementById('scheduleBody');if(!tbody){el.classList.add('nl-hidden');return;}
       var rows=[].slice.call(tbody.children).filter(function(tr){return tr.querySelector&&tr.querySelector('.time-cell');}).map(function(tr){return{tr:tr,min:rowStartMin(tr.querySelector('.time-cell').textContent)};}).filter(function(r){return r.min!=null;});
       if(!rows.length){el.classList.add('nl-hidden');return;}
@@ -7540,7 +7563,13 @@ if(_origApplyAes2){window.applyAesthetic=function(id){_origApplyAes2(id);applyAl
       if(top==null){el.classList.add('nl-hidden');return;}
       el.classList.toggle('nl-out',!!outside);
       var tc=tbody.querySelector('.time-cell'),tw=tc?tc.getBoundingClientRect().width:64;el.style.setProperty('--nl-tw',tw+'px');el.style.top=top+'px';
-      var fm=Math.floor(nowMin);mins.querySelector('.nlm-up').textContent=p2(((fm-1)%60+60)%60);mins.querySelector('.nlm-dn').textContent=p2((fm+1)%60);el.classList.remove('nl-hidden');}
+      var fm=Math.floor(nowMin);
+      var anim=lastMin>=0&&fm!==lastMin;
+      rollTo(mins.querySelector('.nlm-up'),p2(((fm-1)%60+60)%60),anim);
+      rollTo(mins.querySelector('.nlm-dn'),p2((fm+1)%60),anim);
+      if(anim){var orb=el.querySelector('.nl-orb');if(orb){orb.classList.remove('nl-beat');void orb.offsetWidth;orb.classList.add('nl-beat');}}
+      lastMin=fm;
+      el.classList.remove('nl-hidden');}
     return{update:update};})();
   window.NowLine=NL;
   function wire(){
