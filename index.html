@@ -2491,20 +2491,23 @@ body{padding-top:calc(var(--sa-t) + var(--tp-gut))!important;padding-right:calc(
 /* ── Wide desktop layout (≥1500px): Today + stats move into a sticky left column ── */
 .desk-col{display:none;}
 .main-grid.wide-3{grid-template-columns:274px minmax(0,1fr) 296px;}
-.main-grid.wide-3 .desk-col{display:flex;flex-direction:column;gap:14px;min-width:0;position:sticky;top:14px;align-self:start;}
+.main-grid.wide-3 .desk-col{display:flex;flex-direction:column;gap:14px;min-width:0;position:sticky;top:14px;align-self:start;max-height:calc(100vh - 28px);}
 .main-grid.wide-3 .desk-col .today-strip,.main-grid.wide-3 .desk-col .stats-bar{margin-bottom:0;}
+.main-grid.wide-3 .desk-col .today-strip{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;}
+.main-grid.wide-3 .desk-col .stats-bar{flex:0 0 auto;}
 .main-grid.wide-3 .desk-col .today-strip-header{flex-direction:column;align-items:flex-start;gap:3px;margin-bottom:10px;}
-.main-grid.wide-3 .desk-col .today-cards{flex-direction:column;overflow-x:visible;overflow-y:auto;max-height:46vh;gap:7px;padding-right:2px;}
+.main-grid.wide-3 .desk-col .today-cards{flex-direction:column;overflow-x:visible;overflow-y:auto;flex:1 1 auto;min-height:0;gap:7px;padding-right:2px;}
 .main-grid.wide-3 .desk-col .today-card{min-width:0;max-width:none;width:100%;flex-shrink:1;}
 .main-grid.wide-3 .desk-col .stats-row{display:grid;grid-template-columns:1fr 1fr;gap:0;row-gap:14px;}
 .main-grid.wide-3 .desk-col .stat-value{font-size:22px;}
 .main-grid.wide-3 .desk-col .progress-container{margin-bottom:0;}
 @media(max-width:1499px){
   .main-grid.wide-3{grid-template-columns:minmax(0,1fr) 296px;}
-  .main-grid.wide-3 .desk-col{display:flex;flex-direction:column;gap:14px;grid-column:1/-1;position:static;}
+  .main-grid.wide-3 .desk-col{display:flex;flex-direction:column;gap:14px;grid-column:1/-1;position:static;max-height:none;}
+  .main-grid.wide-3 .desk-col .today-strip{flex:0 0 auto;}
+  .main-grid.wide-3 .desk-col .today-card{min-width:110px;max-width:130px;flex-shrink:0;}
   .main-grid.wide-3 .desk-col .today-strip-header{flex-direction:row;align-items:center;}
   .main-grid.wide-3 .desk-col .today-cards{flex-direction:row;overflow-x:auto;max-height:none;gap:8px;}
-  .main-grid.wide-3 .desk-col .today-card{min-width:110px;max-width:130px;flex-shrink:0;}
   .main-grid.wide-3 .desk-col .stats-row{display:flex;gap:34px;}
 }
 
@@ -6280,7 +6283,7 @@ function onLogoFilePick(e){
 }
 
 // ── PWA / INSTALL ──
-window.TP_VERSION='2026.07.29.12';
+window.TP_VERSION='2026.07.29.13';
 var _swReg=null,_bip=null,_swSwapping=false;
 
 function _swSupported(){
